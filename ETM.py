@@ -86,10 +86,23 @@ def modify_user_config(key: str, value: str):
     print("La valeur [{}] a été affectée à la clé [{}] avec succès !".format(value, key))
 
 
+def display_contacts():
+    with open("./contacts.csv", "r") as contacts_file:
+        reader = csv.reader(contacts_file, delimiter=" ", quotechar = "\"")
+        i = 1
+        for row in reader:
+            if len(row) > 0:
+                print("Contact numéro {}:\n\tNom: {}\n\tDescription: {}\n\tIP: {}\n\tStatut: {}".format(str(i), str(row[0]), str(row[1]), str(row[2]), str(row[3])))
+                i = i + 1
+            else:
+                print("\n")
+
+
+def modify_contact(contact_name, key, value):
+    pass
+
+
 # def update_contacts_status():
-
-
-# def modify_contact():
 
 
 # def encrypt_message(message, RSA_key):
@@ -100,38 +113,40 @@ def modify_user_config(key: str, value: str):
 
 if __name__ == "__main__":
     initialize(False)
-    user_choice = int(input("Bienvenue Sur EMT. Quel Est Votre Souhait ?\n\t1/ Me connecter à un salon;\n\t2/ Héberger un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;"))
+    print("Bienvenue Sur EMT.")
 
+    while True:
+        user_choice = int(input("Quel Est Votre Souhait ?\n\t1/ Me connecter à un salon;\n\t2/ Héberger un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;\n\t9/ Quitter ETM;"))
 
-    if user_choice == 1:
-        pass
+        if user_choice == 1:
+            pass
 
-    elif user_choice == 2:
-        pass
+        elif user_choice == 2:
+            pass
 
-    elif user_choice == 3:
-        key = str(input("Quelle clé voulez-vous modifier ? [description / name / ip]"))
-        value = str(input("Quelle nouvelle valeur voulez-vous attribuer à la clé {} ?".format(key)))
-        modify_user_config(key, value)
+        elif user_choice == 3:
+            key = str(input("Quelle clé voulez-vous modifier ? [description / name / ip]"))
+            value = str(input("Quelle nouvelle valeur voulez-vous attribuer à la clé {} ?".format(key)))
+            modify_user_config(key, value)
 
-    elif user_choice == 4:
-        pass
+        elif user_choice == 4:
+            display_contacts()
 
-    elif user_choice == 5:
-        contact_name = str(input("Quel est le nom de votre contact ?"))
-        contact_description = str(input("Quelle est la desription de votre contact ?"))
-        contact_ip = str(input("Veuillez entrer l'adresse ip de votre contact."))
-        add_contact(contact_name, contact_description, contact_ip)
+        elif user_choice == 5:
+            contact_name = str(input("Quel est le nom de votre contact ?"))
+            contact_description = str(input("Quelle est la desription de votre contact ?"))
+            contact_ip = str(input("Veuillez entrer l'adresse ip de votre contact."))
+            add_contact(contact_name, contact_description, contact_ip)
 
-    elif user_choice == 6:
-        pass
+        elif user_choice == 6:
+            pass
 
-    elif user_choice == 7:
-        pass
+        elif user_choice == 7:
+            pass
 
-    elif user_choice == 8:
-        pass
+        elif user_choice == 8:
+            pass
 
-
-    # write_message("ezafaze","azef", "test")
-    # read_messages("test")
+        elif user_choice == 9:
+            print("Au revoir !")
+            break
