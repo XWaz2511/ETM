@@ -37,6 +37,7 @@ def regenerate_user_config (force_regeneration):
 
 def initialize (force_user_config_regeneration):
     regenerate_user_config(force_user_config_regeneration)
+    modify_user_status(1)
 
 
 def write_message (message, author, room):
@@ -70,6 +71,7 @@ def add_contact (name, description, ip):
         writer = csv.writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = csv.QUOTE_MINIMAL)
         writer.writerow([str(name), str(description), str(ip), "offline"])
         contacts_file.close()
+    print("\nContact crée avec succès !\n")
 
 
 def modify_user_config(key: str, value: str):
@@ -98,8 +100,14 @@ def display_contacts():
                 print("\n")
 
 
-def modify_contact(contact_name, key, value):
-    pass
+def modify_user_status(user_choice = -1):
+    if user_choice == -1:
+        user_choice = int(input("\nVoulez-vous être en ligne ou hors-ligne ? [1/2]\n"))
+    if user_choice == 1:
+        modify_user_config(status, "online")
+    else:
+        modify_user_config(status, "offline")
+    print("\nStatut modifié avec succcès !\n")
 
 
 # def update_contacts_status():
@@ -149,4 +157,5 @@ if __name__ == "__main__":
 
         elif user_choice == 9:
             print("Au revoir !")
+            modify_user_status(2)
             break
