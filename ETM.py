@@ -1,11 +1,27 @@
 import csv
 import json
-import datetime
 import os
-import select
-import socket as sock
-import sys
-import queue
+import socket
+from threading import Thread
+
+
+class thread(Thread):
+    def __init__(self, ip):
+        Thread.__init__(self)
+        self.ip = ip
+        print("\nThread démarré sur {}:25115\n".format(ip, 25115))
+    
+    def run(self, connection, serv_msg):
+        if serv_msg == 1:
+            while True:
+                data = connection.recv(8192)
+                print("\n>=< {}\n".format(data.decode("utf-8")))
+                msg = input("\n<=> ")
+                if msg.lower() == "exit":
+                    break
+                connection.send(bytes(msg, "utf-8"))
+        else:
+            connection.send(bytes("0", "utf-8"))
 
 
 def regenerate_user_config (force_regeneration):
@@ -14,13 +30,13 @@ def regenerate_user_config (force_regeneration):
             JSONcontent = user_config_file.read()
             content = json.loads(JSONcontent)
             try:
-                content["name"], content["description"], content["ip"], content["status"]
+                content["name"], content["description"], content["ip"], content["status"], content["type"]
             except KeyError:
-                print("Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                print("\nCorruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
                 regenerate_user_config(True)
             else:
-                if len(content) > 4:
-                    print("Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                if len(content) > 5:
+                    print("\nCorruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
                     regenerate_user_config(True)
                 else:
                     pass
@@ -33,11 +49,12 @@ def regenerate_user_config (force_regeneration):
             "name": "Newbie",
             "description": "null",
             "ip": "127.0.0.1",
-            "status": "online"
+            "status": "online",
+            "type": "user"
         }
         with open("./user.json", "w") as user_config_file:
             json.dump(user, user_config_file)
-        print("Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
+        print("\nNouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
 
 
 def initialize (force_user_config_regeneration):
@@ -45,36 +62,12 @@ def initialize (force_user_config_regeneration):
     modify_user_status(1)
 
 
-def write_message (message, author, room):
-    if not os.path.exists("./Messages"):
-        os.mkdir("Messages")
-    else:
-        pass
-    if not os.path.exists("./Messages/{}.csv".format(str(room))):
-        file = open("./Messages/{}.csv".format(str(room)), "x")
-        file.close()
-    else:
-        pass
-    with open("./Messages/{}.csv".format(str(room)), "a") as message_file:
-        writer = csv.writer(message_file, delimiter = " ", quotechar = "\"", quoting = csv.QUOTE_MINIMAL)
-        writer.writerow([str(datetime.datetime.now()), str(author), str(message)])
-
-
-def read_messages (room):
-    with open("./Messages/{}.csv".format(str(room)), newline = "") as messages_file:
-        reader = csv.reader(messages_file, delimiter = " ", quotechar = "\"")
-        for row in reader:
-            print(" ".join(row) + "\n")
-
-
-def add_contact (name, description, ip):
+def add_contact (name, description, ip, type):
     if not os.path.exists("./contacts.csv"):
         with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
-    else:
-        pass
     with open("./contacts.csv", "a") as contacts_file:
         writer = csv.writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = csv.QUOTE_MINIMAL)
-        writer.writerow([str(name), str(description), str(ip), "offline"])
+        writer.writerow([str(name), str(description), str(ip), "offline", str(type)])
         contacts_file.close()
     print("\nContact crée avec succès !\n")
 
@@ -90,19 +83,50 @@ def modify_user_config(key: str, value: str):
     with open("./user.json", "w") as user_config_file:
         json.dump(content, user_config_file)
         user_config_file.close()
-    print("La valeur [{}] a été affectée à la clé [{}] avec succès !".format(value, key))
+    print("\nLa valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
+
+
+def get_user_config():
+    with open("./user.json", "r") as user_config_file:
+        JSONcontent = user_config_file.read()
+        content = json.loads(JSONcontent)
+        user_config_file.close()
+        return content
 
 
 def display_contacts():
+    if not os.path.exists("./contacts.csv"):
+        with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
     with open("./contacts.csv", "r") as contacts_file:
         reader = csv.reader(contacts_file, delimiter=" ", quotechar = "\"")
         i = 1
         for row in reader:
             if len(row) > 0:
-                print("Contact numéro {}:\n\tNom: {}\n\tDescription: {}\n\tIP: {}\n\tStatut: {}".format(str(i), str(row[0]), str(row[1]), str(row[2]), str(row[3])))
+                print("\nContact numéro {}:\n\tNom: {}\n\tDescription: {}\n\tIP: {}\n\tStatut: {}\n\tType: {}\n".format(str(i), str(row[0]), str(row[1]), str(row[2]), str(row[3]), str(row[4])))
                 i = i + 1
             else:
                 print("\n")
+
+
+def getContactInfo(name):
+    if not os.path.exists("./contacts.csv"):
+        with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
+    with open("./contacts.csv", "r") as contacts_file:
+        reader = csv.reader(contacts_file, delimiter=" ", quotechar = "\"")
+        for row in reader:
+            if len(row) > 0 and str(row[0]).lower() == name.lower():
+                contact = {
+                    "name": str(row[0]),
+                    "description": str(row[1]),
+                    "ip": str(row[2]),
+                    "status": str(row[3]),
+                    "type": str(row[4])
+                }     
+                break
+        if contact:
+            return contact
+        else:
+            return False
 
 
 def modify_user_status(user_choice = -1):
@@ -115,60 +139,42 @@ def modify_user_status(user_choice = -1):
     print("\nStatut modifié avec succcès !\n")
 
 
-def create_client_socket(ip, port, msg):
-    s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-    s.connect((str(ip), int(port)))
-    s.sendall(bytes(str(msg), "utf-8"))
-    data = s.recv(1024)
+def start_server(ip):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((str(ip), 25115))
+    active_threads = []
+    while True:
+        s.listen(999999)
+        print("\nServeur démarré sur {}:25115\n".format(str(ip)))
+        if (get_user_config()["type"] == "client" and len(active_threads) > 0) or get_user_config()["status"] == "offline":
+            connection, (ip, port) = s.accept()
+            newthread = thread(ip)
+            newthread.run(connection, 0)
+            active_threads.append(newthread)
+        else:
+            connection, (ip, port) = s.accept()
+            newthread = thread(ip)
+            newthread.run(connection, 1)
+    for t in active_threads:
+        t.join()
+
+
+def start_client(ip):
+    msg = ""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    s.connect((str(ip), 25115))
+    while msg.lower() != "exit":
+        msg = input("\n<=> ")
+        s.send(bytes(msg, "utf-8"))    
+        data = s.recv(8192).decode("utf-8")
+        if data != (0 or "0"):
+            print(">=< ", data)
+        else:
+            print("\nConnection à l'hôte impossible\n")
+            break
     s.close()
-    print(repr(data), "ok")
 
-
-def create_server_socket(ip, port):
-    s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-    s.setblocking(0)
-    s.bind((str(ip), int(port)))
-    s.listen(15)
-    inputs = [s]
-    outputs = []
-    msg = {}
-    print("\nServeur ouvert avec succès sur {}:{}\n".format(str(ip), str(port)))
-
-    while inputs:
-        readable, writable, exceptional = select.select(inputs, outputs, inputs)
-        for socket in readable:
-            if socket is s:
-                connexion, client_addr = socket.accept()
-                connexion.setblocking(0)
-                msg[connexion] = queue.Queue()
-            else:
-                data = sock.recv(1024)
-                if data:
-                    print(data)
-                    msg[socket].put(data)
-                    if socket not in outputs:
-                        outputs.append(socket)
-                    else:
-                        if socket in outputs:
-                            outputs.remove(socket)
-                        inputs.remove(socket)
-                        socket.close()
-                        del msg[socket]
-
-        for socket in writable:
-            try:
-                next_msg = msg[s].get_nowait()
-            except Queue.Empty:
-                outputs.remove(socket)
-            else:
-                socket.send(next_msg)
-
-        for socket in exceptional:
-            inputs.remove(socket)
-            if socket in outputs:
-                outputs.remove(s)
-            socket.close()
-            del msg[socket]
 
 
 # def update_contacts_status():
@@ -182,35 +188,47 @@ def create_server_socket(ip, port):
 
 if __name__ == "__main__":
     initialize(False)
-    print("Bienvenue Sur EMT.")
+    print("Bienvenue Sur EMT.\n")
 
     while True:
-        user_choice = int(input("Quel Est Votre Souhait ?\n\t1/ Me connecter à un salon;\n\t2/ Héberger un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;\n\t9/ Quitter ETM;"))
+        user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon;\n\t2/ Me connecter à un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;\n\t9/ Quitter ETM;\n\n"))
 
         if user_choice == 1:
-            ip = str(input("\nQuelle est votre IP ?\n"))
-            port = int(input("\nQuel port voulez-vous utiliser ?\n"))
-            create_server_socket(ip, port)
+            choice = str(input("\nVoulez-vous utiliser l'adresse IP enregistrée ? [o / n]\n"))
+            if choice.lower() == "o":
+                user_config = get_user_config()
+                start_server(user_config["ip"])
+            else:
+                ip = str(input("\nQuelle adresse IP voulez-vous utiliser ?\n"))
+                start_server(ip)
 
         elif user_choice == 2:
-            ip = str(input("Quelle ip"))
-            port = int(input("Quel port"))
-            msg = str(input("Message"))
-            create_client_socket(ip, port, msg)
+            choice = int(input("\nVoulez-vous vous connecter à un contact enregistré ou non enregistré ? [1 / 2]\n"))
+            if choice == 1:
+                name = str(input("\nQuel est le nom de votre contact ?\n"))
+                contact = getContactInfo(name)
+                if contact != False:
+                    start_client(contact["ip"])
+                else:
+                    print("\nVous n'avez aucun contact enregistré à ce nom !\n")
+            else:
+                ip = str(input("\nQuelle est l'adresse IP de votre contact ?\n"))
+                start_client(ip)
 
         elif user_choice == 3:
-            key = str(input("Quelle clé voulez-vous modifier ? [description / name / ip]"))
-            value = str(input("Quelle nouvelle valeur voulez-vous attribuer à la clé {} ?".format(key)))
+            key = str(input("\nQuelle clé voulez-vous modifier ? [description / name / ip / type]\n"))
+            value = str(input("\nQuelle nouvelle valeur voulez-vous attribuer à la clé {} ?\n".format(key)))
             modify_user_config(key, value)
 
         elif user_choice == 4:
             display_contacts()
 
         elif user_choice == 5:
-            contact_name = str(input("Quel est le nom de votre contact ?"))
-            contact_description = str(input("Quelle est la desription de votre contact ?"))
-            contact_ip = str(input("Veuillez entrer l'adresse ip de votre contact."))
-            add_contact(contact_name, contact_description, contact_ip)
+            contact_name = str(input("\nQuel est le nom de votre contact ?\n"))
+            contact_description = str(input("\nQuelle est la desription de votre contact ?\n"))
+            contact_ip = str(input("\nVeuillez entrer l'adresse ip de votre contact.\n"))
+            contact_type = str(input("\nVeuillez entrer le type de votre contact.\n"))
+            add_contact(contact_name, contact_description, contact_ip, contact_type)
 
         elif user_choice == 6:
             pass
@@ -222,6 +240,6 @@ if __name__ == "__main__":
             pass
 
         elif user_choice == 9:
-            print("Au revoir !")
+            print("\nAu revoir !")
             modify_user_status(2)
             break
