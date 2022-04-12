@@ -2,6 +2,11 @@ import csv
 import json
 import datetime
 import os
+import select
+import socket as sock
+import sys
+import queue
+
 
 def regenerate_user_config (force_regeneration):
     if os.path.exists("./user.json") and force_regeneration == False:
@@ -104,10 +109,66 @@ def modify_user_status(user_choice = -1):
     if user_choice == -1:
         user_choice = int(input("\nVoulez-vous être en ligne ou hors-ligne ? [1/2]\n"))
     if user_choice == 1:
-        modify_user_config(status, "online")
+        modify_user_config("status", "online")
     else:
-        modify_user_config(status, "offline")
+        modify_user_config("status", "offline")
     print("\nStatut modifié avec succcès !\n")
+
+
+def create_client_socket(ip, port, msg):
+    s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+    s.connect((str(ip), int(port)))
+    s.sendall(bytes(str(msg), "utf-8"))
+    data = s.recv(1024)
+    s.close()
+    print(repr(data), "ok")
+
+
+def create_server_socket(ip, port):
+    s = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+    s.setblocking(0)
+    s.bind((str(ip), int(port)))
+    s.listen(15)
+    inputs = [s]
+    outputs = []
+    msg = {}
+    print("\nServeur ouvert avec succès sur {}:{}\n".format(str(ip), str(port)))
+
+    while inputs:
+        readable, writable, exceptional = select.select(inputs, outputs, inputs)
+        for socket in readable:
+            if socket is s:
+                connexion, client_addr = socket.accept()
+                connexion.setblocking(0)
+                msg[connexion] = queue.Queue()
+            else:
+                data = sock.recv(1024)
+                if data:
+                    print(data)
+                    msg[socket].put(data)
+                    if socket not in outputs:
+                        outputs.append(socket)
+                    else:
+                        if socket in outputs:
+                            outputs.remove(socket)
+                        inputs.remove(socket)
+                        socket.close()
+                        del msg[socket]
+
+        for socket in writable:
+            try:
+                next_msg = msg[s].get_nowait()
+            except Queue.Empty:
+                outputs.remove(socket)
+            else:
+                socket.send(next_msg)
+
+        for socket in exceptional:
+            inputs.remove(socket)
+            if socket in outputs:
+                outputs.remove(s)
+            socket.close()
+            del msg[socket]
 
 
 # def update_contacts_status():
@@ -127,10 +188,15 @@ if __name__ == "__main__":
         user_choice = int(input("Quel Est Votre Souhait ?\n\t1/ Me connecter à un salon;\n\t2/ Héberger un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;\n\t9/ Quitter ETM;"))
 
         if user_choice == 1:
-            pass
+            ip = str(input("\nQuelle est votre IP ?\n"))
+            port = int(input("\nQuel port voulez-vous utiliser ?\n"))
+            create_server_socket(ip, port)
 
         elif user_choice == 2:
-            pass
+            ip = str(input("Quelle ip"))
+            port = int(input("Quel port"))
+            msg = str(input("Message"))
+            create_client_socket(ip, port, msg)
 
         elif user_choice == 3:
             key = str(input("Quelle clé voulez-vous modifier ? [description / name / ip]"))
