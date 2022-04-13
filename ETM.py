@@ -6,20 +6,29 @@ from threading import Thread
 
 
 class thread(Thread):
-    def __init__(self, ip):
+    def __init__(self, ip, id):
         Thread.__init__(self)
         self.ip = ip
+        self.id = id
         print("\nThread démarré sur {}:25115\n".format(ip, 25115))
     
     def run(self, connection, serv_msg):
         if serv_msg == 1:
+            connection.send(bytes("1", "utf-8"))
             while True:
-                data = connection.recv(8192)
-                print("\n>=< {}\n".format(data.decode("utf-8")))
-                msg = input("\n<=> ")
-                if msg.lower() == "exit":
+                data = connection.recv(8192).decode("utf-8")
+                print("\n>=< {}\n".format(data))
+                if data == "exit":
                     break
-                connection.send(bytes(msg, "utf-8"))
+                else:
+                    msg = input("\n<=> ")
+                    connection.send(bytes(msg, "utf-8"))
+                    if msg.lower() == "exit":
+                        break
+            del(active_threads[int(self.id)])
+            print("\nConnexion fermée !\n")
+        elif serv_msg == 2:
+            connection.send(bytes("2", "utf-8"))
         else:
             connection.send(bytes("0", "utf-8"))
 
@@ -143,19 +152,20 @@ def start_server(ip):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((str(ip), 25115))
-    active_threads = []
     while True:
-        s.listen(999999)
+        s.listen(999999999)
         print("\nServeur démarré sur {}:25115\n".format(str(ip)))
-        if (get_user_config()["type"] == "client" and len(active_threads) > 0) or get_user_config()["status"] == "offline":
-            connection, (ip, port) = s.accept()
-            newthread = thread(ip)
+        connection, (ip, port) = s.accept()
+        newthread = thread(ip, len(active_threads))
+        if get_user_config()["status"] == "offline": 
             newthread.run(connection, 0)
-            active_threads.append(newthread)
+        elif get_user_config()["type"] == "client" and len(active_threads) > 0:
+            newthread.run(connection, 2)
         else:
-            connection, (ip, port) = s.accept()
-            newthread = thread(ip)
+            active_threads.append(newthread)
             newthread.run(connection, 1)
+        if len(active_threads) <= 0:
+            break
     for t in active_threads:
         t.join()
 
@@ -164,16 +174,27 @@ def start_client(ip):
     msg = ""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     s.connect((str(ip), 25115))
-    while msg.lower() != "exit":
-        msg = input("\n<=> ")
-        s.send(bytes(msg, "utf-8"))    
-        data = s.recv(8192).decode("utf-8")
-        if data != (0 or "0"):
-            print(">=< ", data)
-        else:
-            print("\nConnection à l'hôte impossible\n")
-            break
-    s.close()
+    data = s.recv(8192).decode("utf-8")
+    if data == ("1"):
+        print("\nConnection à l'hôte réussie !\n")
+        while True:
+            msg = input("\n<=> ")
+            s.send(bytes(msg, "utf-8"))
+            if msg.lower() == "exit":
+                break  
+            data = s.recv(8192).decode("utf-8")
+            if data == "exit":
+                break
+            else:
+                print("\n>=< ", data)
+        s.close()
+        print("\nConnexion fermée !\n")
+    elif data == ("2"):
+        print("\nConnection à l'hôte impossible : l'hôte a atteint le nombre maximal de connexions.\n")
+        s.close()
+    else:
+        print("\nConnection à l'hôte impossible : l'hôte est hors-ligne.\n")
+        s.close()
 
 
 
@@ -188,6 +209,7 @@ def start_client(ip):
 
 if __name__ == "__main__":
     initialize(False)
+    active_threads = []
     print("Bienvenue Sur EMT.\n")
 
     while True:
