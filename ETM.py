@@ -1,16 +1,16 @@
 import csv
 import json
 import os
+from re import L
 import socket
 from threading import Thread
-import asyncio
+from multiprocessing import Process
 
 
 def listener(socket):
     while True:
         data = socket.recv(8192).decode("utf-8")
         print("\n>=< ", data)
-        return data
 
 
 class thread(Thread):
@@ -24,11 +24,12 @@ class thread(Thread):
         if serv_msg == 1:
             connection.send(bytes("1", "utf-8"))
             while True:
-                data = listener(connection)
-                if data == "exit":
+                l = Process(target=listener, args=(connection,))
+                l.start()
+                if l == "exit":
                     break
                 else:
-                    msg = input("\n<=> ")
+                    msg = input("\n")
                     connection.send(bytes(msg, "utf-8"))
                     if msg.lower() == "exit":
                         break
@@ -185,11 +186,12 @@ def start_client(ip):
     if data == ("1"):
         print("\nConnection à l'hôte réussie !\n")
         while True:
-            msg = input("\n<=> ")
+            msg = input("\n")
             s.send(bytes(msg, "utf-8"))
             if msg.lower() == "exit":
                 break  
-            data = listener(s)
+            l = Process(target=listener, args=(s,))
+            l.start()
             if data == "exit":
                 break
         s.close()
