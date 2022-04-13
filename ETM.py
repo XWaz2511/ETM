@@ -3,6 +3,14 @@ import json
 import os
 import socket
 from threading import Thread
+import asyncio
+
+
+def listener(socket):
+    while True:
+        data = socket.recv(8192).decode("utf-8")
+        print("\n>=< ", data)
+        return data
 
 
 class thread(Thread):
@@ -16,8 +24,7 @@ class thread(Thread):
         if serv_msg == 1:
             connection.send(bytes("1", "utf-8"))
             while True:
-                data = connection.recv(8192).decode("utf-8")
-                print("\n>=< {}\n".format(data))
+                data = listener(connection)
                 if data == "exit":
                     break
                 else:
@@ -182,11 +189,9 @@ def start_client(ip):
             s.send(bytes(msg, "utf-8"))
             if msg.lower() == "exit":
                 break  
-            data = s.recv(8192).decode("utf-8")
+            data = listener(s)
             if data == "exit":
                 break
-            else:
-                print("\n>=< ", data)
         s.close()
         print("\nConnexion fermée !\n")
     elif data == ("2"):
