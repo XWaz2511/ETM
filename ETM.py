@@ -5,46 +5,64 @@ from re import L
 import socket
 from threading import Thread
 from multiprocessing import Process
+import datetime
 
 
-def listener(socket):
+def listener(socket, pair_ip):
     while True:
-        data = socket.recv(8192).decode("utf-8")
-        print("\n>=< ", data)
+        try:
+            data = socket.recv(8192).decode("utf-8")
+            print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')), str(data)))
+        except ConnectionResetError:
+            modify_cache("stop_listening")
+            print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
+            break
         if data == "exit":
-            keep_running = False
-            for thread in active_threads:
-                thread.keep_running = False
+            modify_cache("stop_listening")
+            print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
+            break
+        else:
+            modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), data)
 
 
 class thread(Thread):
-    def __init__(self, ip, id):
+    def __init__(self, ip, id, client_ip):
         Thread.__init__(self)
         self.ip = ip
         self.id = id
-        self.keep_running = True
-        print("\n[+] Nouveau client connecté. Thread démarré sur {}:25115\n".format(ip, 25115))
+        self.client_ip = client_ip
+        print("\n[+] Nouveau client connecté ({}:25115) !\n".format(client_ip, 25115))
 
     def run(self, connection, serv_msg):
         if serv_msg == 1:
-            connection.send(bytes("1", "utf-8"))
+            try:
+                connection.send(bytes("1", "utf-8"))
+            except ConnectionResetError:
+                pass          
+            modify_cache("reset_cache")
+            l = Process(target=listener, args=(connection, self.client_ip,))
+            l.start()
             while True:
-                l = Process(target=listener, args=(connection,))
-                l.start()
-                if self.keep_running == False:
-                    self.keep_running = True
-                    break
-                else:
-                    msg = input("\n")
+                msg = input("\n")
+                modify_cache("save_message", "[{}] {}".format(str(self.ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), msg)
+                try:
                     connection.send(bytes(msg, "utf-8"))
-                    if msg.lower() == "exit":
-                        break
+                except ConnectionResetError:
+                    pass
+                if msg.lower() == "exit":
+                    modify_cache("stop_listening")
+                if modify_cache("get_listening_status") == False:
+                    user_choice = str(input("\nVoulez-vous enregistrer cette conversation ? [O/N]\n"))
+                    if user_choice.lower() == "o":
+                        modify_cache("save_conversation")
+                    break
             del(active_threads[int(self.id)])
             print("\nConnexion fermée !\n")
-        elif serv_msg == 2:
-            connection.send(bytes("2", "utf-8"))
         else:
-            connection.send(bytes("0", "utf-8"))
+            try:
+                connection.send(bytes("0", "utf-8"))
+            except ConnectionResetError:
+                pass
 
 
 def regenerate_user_config (force_regeneration):
@@ -53,12 +71,12 @@ def regenerate_user_config (force_regeneration):
             JSONcontent = user_config_file.read()
             content = json.loads(JSONcontent)
             try:
-                content["name"], content["description"], content["ip"], content["status"], content["type"]
+                content["name"], content["description"], content["ip"], content["status"]
             except KeyError:
                 print("\nCorruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
                 regenerate_user_config(True)
             else:
-                if len(content) > 5:
+                if len(content) > 4:
                     print("\nCorruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
                     regenerate_user_config(True)
                 else:
@@ -72,25 +90,85 @@ def regenerate_user_config (force_regeneration):
             "name": "Newbie",
             "description": "null",
             "ip": "127.0.0.1",
-            "status": "online",
-            "type": "user"
+            "status": "online"
         }
         with open("./user.json", "w") as user_config_file:
             json.dump(user, user_config_file)
+            user_config_file.close()
         print("\nNouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
 
 
 def initialize (force_user_config_regeneration):
     regenerate_user_config(force_user_config_regeneration)
     modify_user_status(1)
+    modify_cache("reset_cache")
 
 
-def add_contact (name, description, ip, type):
+def modify_cache(request, key="", value=""):
+    if not os.path.exists("./cache.json"):
+        with open("./cache.json", "x") as cache_file: cache_file.close()
+
+    if request == "reset_cache":
+        with open("./cache.json", "w") as cache_file:
+            cache_template = {
+                "keep_listening": True,
+                "saved_conversation": {}
+            }
+            json.dump(cache_template, cache_file)
+            cache_file.close()
+    elif request == "save_message":
+        with open("./cache.json", "r") as cache_file:
+            JSONcontent = cache_file.read()
+            content = json.loads(JSONcontent)
+            cache_file.close()
+        content["saved_conversation"][str(key)] = str(value)
+        with open("./cache.json", "w") as cache_file:
+            json.dump(content, cache_file)
+            cache_file.close()
+    elif request == "save_conversation":
+        with open("./cache.json", "r") as cache_file:
+            JSONcontent = cache_file.read()
+            content = json.loads(JSONcontent)
+            cache_file.close()
+        if not os.path.exists("./saved_conversation.txt"):
+            with open("./saved_conversation.txt", "x") as saved_conversation_file: saved_conversation_file.close()
+        else:
+            with open("./saved_conversation.txt", "w") as saved_conversation_file: saved_conversation_file.close()
+        content = content["saved_conversation"].items()
+        for elt in content:
+            with open("./saved_conversation.txt", "a") as saved_conversation_file:
+                saved_conversation_file.write("\n# {} =>".format(str(elt[0])))
+                saved_conversation_file.close()
+            with open("./saved_conversation.txt", "a") as saved_conversation_file:
+                saved_conversation_file.write(str("\n\t\" {} \"\n".format(str(elt[1]))))
+                saved_conversation_file.close()
+        if os.path.exists("./saved_conversation.txt"):
+            print("\nConversation sauvegardée avec succès dans saved_conversation.txt !\n")
+        else:
+            print("\nÉchec lors de la sauvegarde de la conversation !\n")
+    elif request == "stop_listening":
+        with open("./cache.json", "r") as cache_file:
+            JSONcontent = cache_file.read()
+            content = json.loads(JSONcontent)
+            cache_file.close()
+        content["keep_listening"] = False
+        with open("./cache.json", "w") as cache_file:
+            json.dump(content, cache_file)
+            cache_file.close()
+    elif request == "get_listening_status":
+        with open("./cache.json", "r") as cache_file:
+            JSONcontent = cache_file.read()
+            content = json.loads(JSONcontent)
+            cache_file.close()
+        return content["keep_listening"]
+
+
+def add_contact (name, description, ip):
     if not os.path.exists("./contacts.csv"):
         with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
     with open("./contacts.csv", "a") as contacts_file:
         writer = csv.writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = csv.QUOTE_MINIMAL)
-        writer.writerow([str(name), str(description), str(ip), "offline", str(type)])
+        writer.writerow([str(name), str(description), str(ip), "offline"])
         contacts_file.close()
     print("\nContact crée avec succès !\n")
 
@@ -152,7 +230,7 @@ def getContactInfo(name):
             return False
 
 
-def modify_user_status(user_choice = -1):
+def modify_user_status(user_choice=-1):
     if user_choice == -1:
         user_choice = int(input("\nVoulez-vous être en ligne ou hors-ligne ? [1/2]\n"))
     if user_choice == 1:
@@ -167,14 +245,12 @@ def start_server(ip):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((str(ip), 25115))
     while True:
-        s.listen(999999999)
+        s.listen(1)
         print("\nServeur démarré sur {}:25115\n".format(str(ip)))
-        connection, (ip, port) = s.accept()
-        newthread = thread(ip, len(active_threads))
+        connection, client_ip = s.accept()
+        newthread = thread(ip, len(active_threads), client_ip)
         if get_user_config()["status"] == "offline":
             newthread.run(connection, 0)
-        elif get_user_config()["type"] == "client" and len(active_threads) > 0:
-            newthread.run(connection, 2)
         else:
             active_threads.append(newthread)
             newthread.run(connection, 1)
@@ -191,21 +267,25 @@ def start_client(ip):
     data = s.recv(8192).decode("utf-8")
     if data == ("1"):
         print("\nConnection à l'hôte réussie !\n")
+        modify_cache("reset_cache")
+        l = Process(target=listener, args=(s, ip,))
+        l.start()
         while True:
             msg = input("\n")
-            s.send(bytes(msg, "utf-8"))
+            modify_cache("save_message", "[{}] {} ".format(str(ip), str(datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))), msg)
+            try:
+                s.send(bytes(msg, "utf-8"))
+            except ConnectionResetError:
+                pass
             if msg.lower() == "exit":
-                break
-            l = Process(target=listener, args=(s,))
-            l.start()
-            if keep_running == False:
-                keep_running = True
+                modify_cache("stop_listening")
+            if modify_cache("get_listening_status") == False:
+                user_choice = str(input("\nVoulez-vous enregistrer cette conversation ? [O/N]\n"))
+                if user_choice.lower() == "o":
+                    modify_cache("save_conversation")
                 break
         s.close()
         print("\nConnexion fermée !\n")
-    elif data == ("2"):
-        print("\nConnection à l'hôte impossible : l'hôte a atteint le nombre maximal de connexions.\n")
-        s.close()
     else:
         print("\nConnection à l'hôte impossible : l'hôte est hors-ligne.\n")
         s.close()
@@ -224,14 +304,13 @@ def start_client(ip):
 if __name__ == "__main__":
     initialize(False)
     active_threads = []
-    keep_running = True
     print("Bienvenue Sur EMT.\n")
 
     while True:
         user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon;\n\t2/ Me connecter à un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;\n\t9/ Quitter ETM;\n\n"))
 
         if user_choice == 1:
-            choice = str(input("\nVoulez-vous utiliser l'adresse IP enregistrée ? [o / n]\n"))
+            choice = str(input("\nVoulez-vous utiliser l'adresse IP enregistrée ? [O/N]\n"))
             if choice.lower() == "o":
                 user_config = get_user_config()
                 start_server(user_config["ip"])
@@ -240,7 +319,7 @@ if __name__ == "__main__":
                 start_server(ip)
 
         elif user_choice == 2:
-            choice = int(input("\nVoulez-vous vous connecter à un contact enregistré ou non enregistré ? [1 / 2]\n"))
+            choice = int(input("\nVoulez-vous vous connecter à un contact enregistré ou non enregistré ? [1/2]\n"))
             if choice == 1:
                 name = str(input("\nQuel est le nom de votre contact ?\n"))
                 contact = getContactInfo(name)
@@ -264,8 +343,7 @@ if __name__ == "__main__":
             contact_name = str(input("\nQuel est le nom de votre contact ?\n"))
             contact_description = str(input("\nQuelle est la desription de votre contact ?\n"))
             contact_ip = str(input("\nVeuillez entrer l'adresse ip de votre contact.\n"))
-            contact_type = str(input("\nVeuillez entrer le type de votre contact.\n"))
-            add_contact(contact_name, contact_description, contact_ip, contact_type)
+            add_contact(contact_name, contact_description, contact_ip)
 
         elif user_choice == 6:
             pass
