@@ -7,15 +7,14 @@ from threading import Thread
 from multiprocessing import Process
 
 
-keep_running = True
-
-
 def listener(socket):
     while True:
         data = socket.recv(8192).decode("utf-8")
         print("\n>=< ", data)
         if data == "exit":
             keep_running = False
+            for thread in active_threads:
+                thread.keep_running = False
 
 
 class thread(Thread):
@@ -23,6 +22,7 @@ class thread(Thread):
         Thread.__init__(self)
         self.ip = ip
         self.id = id
+        self.keep_running = False
         print("\n[+] Nouveau client connecté. Thread démarré sur {}:25115\n".format(ip, 25115))
 
     def run(self, connection, serv_msg):
@@ -31,8 +31,8 @@ class thread(Thread):
             while True:
                 l = Process(target=listener, args=(connection,))
                 l.start()
-                if keep_running == False:
-                    keep_running = True
+                if self.keep_running == False:
+                    self.keep_running = True
                     break
                 else:
                     msg = input("\n")
@@ -224,6 +224,7 @@ def start_client(ip):
 if __name__ == "__main__":
     initialize(False)
     active_threads = []
+    keep_running = True
     print("Bienvenue Sur EMT.\n")
 
     while True:
