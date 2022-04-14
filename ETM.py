@@ -236,7 +236,7 @@ def modify_user_status(user_choice=-1):
         modify_user_config("status", "online")
     else:
         modify_user_config("status", "offline")
-    print("\nStatut modifié avec succcès !\n")
+    print("\nStatut modifié avec succès !\n")
 
 
 def start_server(ip):
@@ -299,7 +299,7 @@ def start_client(ip):
 if __name__ == "__main__":
     initialize(False)
     active_threads = []
-    print("Bienvenue Sur ETM.\n")
+    print("\nBienvenue Sur ETM.\n")
 
     while True:
         user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n"))
