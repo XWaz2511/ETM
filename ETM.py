@@ -7,10 +7,15 @@ from threading import Thread
 from multiprocessing import Process
 
 
+keep_running = True
+
+
 def listener(socket):
     while True:
         data = socket.recv(8192).decode("utf-8")
         print("\n>=< ", data)
+        if data == "exit":
+            keep_running = False
 
 
 class thread(Thread):
@@ -18,15 +23,16 @@ class thread(Thread):
         Thread.__init__(self)
         self.ip = ip
         self.id = id
-        print("\nThread démarré sur {}:25115\n".format(ip, 25115))
-    
+        print("\n[+] Nouveau client connecté. Thread démarré sur {}:25115\n".format(ip, 25115))
+
     def run(self, connection, serv_msg):
         if serv_msg == 1:
             connection.send(bytes("1", "utf-8"))
             while True:
                 l = Process(target=listener, args=(connection,))
                 l.start()
-                if l == "exit":
+                if keep_running == False:
+                    keep_running = True
                     break
                 else:
                     msg = input("\n")
@@ -138,7 +144,7 @@ def getContactInfo(name):
                     "ip": str(row[2]),
                     "status": str(row[3]),
                     "type": str(row[4])
-                }     
+                }
                 break
         if contact:
             return contact
@@ -165,7 +171,7 @@ def start_server(ip):
         print("\nServeur démarré sur {}:25115\n".format(str(ip)))
         connection, (ip, port) = s.accept()
         newthread = thread(ip, len(active_threads))
-        if get_user_config()["status"] == "offline": 
+        if get_user_config()["status"] == "offline":
             newthread.run(connection, 0)
         elif get_user_config()["type"] == "client" and len(active_threads) > 0:
             newthread.run(connection, 2)
@@ -180,7 +186,7 @@ def start_server(ip):
 
 def start_client(ip):
     msg = ""
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((str(ip), 25115))
     data = s.recv(8192).decode("utf-8")
     if data == ("1"):
@@ -189,10 +195,11 @@ def start_client(ip):
             msg = input("\n")
             s.send(bytes(msg, "utf-8"))
             if msg.lower() == "exit":
-                break  
+                break
             l = Process(target=listener, args=(s,))
             l.start()
-            if data == "exit":
+            if keep_running == False:
+                keep_running = True
                 break
         s.close()
         print("\nConnexion fermée !\n")
