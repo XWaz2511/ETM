@@ -299,7 +299,7 @@ def start_client(ip):
 if __name__ == "__main__":
     initialize(False)
     active_threads = []
-    print("Bienvenue Sur EMT.\n")
+    print("Bienvenue Sur ETM.\n")
 
     while True:
         user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n"))
