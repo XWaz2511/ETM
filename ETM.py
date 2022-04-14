@@ -1,7 +1,6 @@
 import csv
 import json
 import os
-from re import L
 import socket
 from threading import Thread
 from multiprocessing import Process
@@ -291,10 +290,6 @@ def start_client(ip):
         s.close()
 
 
-
-# def update_contacts_status():
-
-
 # def encrypt_message(message, RSA_key):
 
 
@@ -307,7 +302,7 @@ if __name__ == "__main__":
     print("Bienvenue Sur EMT.\n")
 
     while True:
-        user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon;\n\t2/ Me connecter à un salon;\n\t3/ Modifier mes réglages;\n\t4/ Afficher mes contacts;\n\t5/ Ajouter un contact;\n\t6/ Modifier mon statut;\n\t7/ Afficher l'aide;\n\t8/ C'est quoi ETM ?;\n\t9/ Quitter ETM;\n\n"))
+        user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n"))
 
         if user_choice == 1:
             choice = str(input("\nVoulez-vous utiliser l'adresse IP enregistrée ? [O/N]\n"))
@@ -346,13 +341,14 @@ if __name__ == "__main__":
             add_contact(contact_name, contact_description, contact_ip)
 
         elif user_choice == 6:
-            pass
+            choice = int(input("\nVoulez-vous passer en mode en ligne ou en mode hors-ligne ? [1/2]\n"))
+            modify_user_status(choice)
 
         elif user_choice == 7:
-            pass
+            print("\nBientôt\n")
 
         elif user_choice == 8:
-            pass
+            print("\nBientôt\n")
 
         elif user_choice == 9:
             print("\nAu revoir !")
