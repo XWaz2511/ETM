@@ -22,7 +22,7 @@ class thread(Thread):
         Thread.__init__(self)
         self.ip = ip
         self.id = id
-        self.keep_running = False
+        self.keep_running = True
         print("\n[+] Nouveau client connecté. Thread démarré sur {}:25115\n".format(ip, 25115))
 
     def run(self, connection, serv_msg):
