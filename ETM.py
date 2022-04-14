@@ -16,7 +16,7 @@ def listener(socket, pair_ip):
             modify_cache("stop_listening")
             print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
             break
-        if data == "exit":
+        if data.lower() == "exit":
             modify_cache("stop_listening")
             print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
             break
@@ -30,7 +30,7 @@ class thread(Thread):
         self.ip = ip
         self.id = id
         self.client_ip = client_ip
-        print("\n[+] Nouveau client connecté ({}:25115) !\n".format(client_ip, 25115))
+        print("\n[+] Nouveau client connecté ({}:25115) ! Dès que vous voudrez quitter la discussion, entrez Exit.\n".format(client_ip, 25115))
 
     def run(self, connection, serv_msg):
         if serv_msg == 1:
@@ -48,7 +48,7 @@ class thread(Thread):
                     connection.send(bytes(msg, "utf-8"))
                 except ConnectionResetError:
                     pass
-                if msg.lower() == "exit":
+                if msg.lower() == "Exit":
                     modify_cache("stop_listening")
                 if modify_cache("get_listening_status") == False:
                     user_choice = str(input("\nVoulez-vous enregistrer cette conversation ? [O/N]\n"))
@@ -265,7 +265,7 @@ def start_client(ip):
     s.connect((str(ip), 25115))
     data = s.recv(8192).decode("utf-8")
     if data == ("1"):
-        print("\nConnection à l'hôte réussie !\n")
+        print("\nConnection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
         modify_cache("reset_cache")
         l = Process(target=listener, args=(s, ip,))
         l.start()
