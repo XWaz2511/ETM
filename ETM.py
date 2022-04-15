@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 import csv
 import json
 import os
@@ -17,18 +16,16 @@ except:
 
 
 active_threads = []
-key = RSA.generate(2048)
-public_key = key.public_key().export_key()
-contact_public_key = b""
-contact_cipher = PKCS1_OAEP.new(public_key)
-cipher = PKCS1_OAEP.new(public_key)
+keys = [RSA.generate(2048)] #keys[0] = clé de base, keys[1] = clé privée, keys[2] = clé publique, keys[3] = clé publique du contact pour l'import, keys[4] = clé publique du contact
+keys.append(PKCS1_OAEP.new(keys[0]))
+keys.append(keys[0].public_key().export_key())
 
 
 def listener(socket, pair_ip):
     while True:
         try:
-            data = socket.recv(8192)
-            print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')), cipher.decrypt(data)))
+            data = socket.recv(16384)
+            print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')), keys[1].decrypt(data)))
         except ConnectionResetError:
             modify_cache("stop_listening")
             print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
@@ -38,7 +35,7 @@ def listener(socket, pair_ip):
             print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
             break
         else:
-            modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), cipher.decrypt(data))
+            modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), keys[1].decrypt(data))
 
 
 class thread(Thread):
@@ -53,9 +50,9 @@ class thread(Thread):
         if serv_msg == 1:
             try:
                 connection.send(bytes("1", "utf-8"))
-                contact_public_key = connection.recv(8192)
-                connection.send(public_key)
-                contact_cipher = PKCS1_OAEP.new(RSA.importKey(contact_public_key))
+                keys.append(connection.recv(16384))
+                connection.send(keys[2])
+                keys.append(PKCS1_OAEP.new(RSA.import_key(keys[3])))
             except ConnectionResetError:
                 pass          
             modify_cache("reset_cache")
@@ -65,7 +62,7 @@ class thread(Thread):
                 msg = input("\n")
                 modify_cache("save_message", "[{}] {}".format(str(self.ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), msg)
                 try:
-                    connection.send(contact_cipher.encrypt(bytes(msg, "utf-8")))
+                    connection.send(keys[4].encrypt(bytes(msg, "utf-8")))
                 except ConnectionResetError:
                     pass
                 if msg.lower() == "Exit":
@@ -283,11 +280,11 @@ def start_client(ip):
     msg = ""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((str(ip), 25115))
-    data = s.recv(8192).decode("utf-8")
+    data = s.recv(16384).decode("utf-8")
     if data == ("1"):
-        s.send(public_key)
-        contact_public_key = s.recv(8192)
-        contact_cipher = PKCS1_OAEP.new(RSA.importKey(contact_public_key))
+        s.send(keys[2])
+        keys.append(s.recv(16384))
+        keys.append(PKCS1_OAEP.new(RSA.import_key(keys[3])))
         print("\nConnection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
         modify_cache("reset_cache")
         l = Process(target=listener, args=(s, ip,))
@@ -296,7 +293,7 @@ def start_client(ip):
             msg = input("\n")
             modify_cache("save_message", "[{}] {} ".format(str(ip), str(datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))), msg)
             try:
-                s.send(contact_cipher.encrypt(bytes(msg, "utf-8")))
+                s.send(keys[4].encrypt(bytes(msg, "utf-8")))
             except ConnectionResetError:
                 pass
             if msg.lower() == "exit":
