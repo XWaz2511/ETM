@@ -1,10 +1,12 @@
 import csv
 import json
+import multiprocessing
 import os
 import socket
 from threading import Thread
 from multiprocessing import Process
 import datetime
+
 try:
     from Cryptodome.PublicKey import RSA
     from Cryptodome.Cipher import PKCS1_OAEP
@@ -14,28 +16,28 @@ except:
     from Cryptodome.PublicKey import RSA
     from Cryptodome.Cipher import PKCS1_OAEP
 
-
-active_threads = []
-keys = [RSA.generate(2048)] #keys[0] = clé de base, keys[1] = clé privée, keys[2] = clé publique, keys[3] = clé publique du contact pour l'import, keys[4] = clé publique du contact
-keys.append(PKCS1_OAEP.new(keys[0]))
-keys.append(keys[0].public_key().export_key())
+if multiprocessing.get_start_method() != "spawn":
+    multiprocessing.set_start_method("spawn")
 
 
-def listener(socket, pair_ip):
+def listener(socket, pair_ip, key):
+    private_key = PKCS1_OAEP.new(RSA.import_key(key))
     while True:
         try:
-            data = socket.recv(16384)
-            print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')), keys[1].decrypt(data)))
+            crypted_data = socket.recv(16384)
+            print("Message crypté: ", crypted_data)
+            decrypted_data = private_key.decrypt(crypted_data).decode("utf-8")
+            print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
         except ConnectionResetError:
             modify_cache("stop_listening")
-            print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
+            print("\nVotre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
             break
-        if data.lower() == "exit":
+        if decrypted_data.lower() == "exit":
             modify_cache("stop_listening")
-            print("\nVotre correspondant s'est déconnecté ! Appuyez sur Espace pour continuer.\n")
+            print("\nVotre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
             break
         else:
-            modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), keys[1].decrypt(data))
+            modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
 
 
 class thread(Thread):
@@ -51,18 +53,22 @@ class thread(Thread):
             try:
                 connection.send(bytes("1", "utf-8"))
                 keys.append(connection.recv(16384))
+                print("\nClé publique du contact pour l'import : ", keys[3])
                 connection.send(keys[2])
                 keys.append(PKCS1_OAEP.new(RSA.import_key(keys[3])))
+                print("\nClé publique du contact : ", keys[4])
             except ConnectionResetError:
                 pass          
             modify_cache("reset_cache")
-            l = Process(target=listener, args=(connection, self.client_ip,))
+            l = Process(target=listener, args=(connection, self.client_ip, keys[0].export_key(),))
             l.start()
             while True:
                 msg = input("\n")
                 modify_cache("save_message", "[{}] {}".format(str(self.ip), str(datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), msg)
                 try:
-                    connection.send(keys[4].encrypt(bytes(msg, "utf-8")))
+                    msg = keys[4].encrypt(bytes(msg, "utf-8"))
+                    print("\nMessage crypté : ", msg)
+                    connection.send(msg)
                 except ConnectionResetError:
                     pass
                 if msg.lower() == "Exit":
@@ -284,16 +290,20 @@ def start_client(ip):
     if data == ("1"):
         s.send(keys[2])
         keys.append(s.recv(16384))
+        print("\nClé publique du contact pour l'import : ", keys[3])
         keys.append(PKCS1_OAEP.new(RSA.import_key(keys[3])))
+        print("\nClé publique du contact : ", keys[4])
         print("\nConnection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
         modify_cache("reset_cache")
-        l = Process(target=listener, args=(s, ip,))
+        l = Process(target=listener, args=(s, ip, keys[0].export_key(),))
         l.start()
         while True:
             msg = input("\n")
             modify_cache("save_message", "[{}] {} ".format(str(ip), str(datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))), msg)
             try:
-                s.send(keys[4].encrypt(bytes(msg, "utf-8")))
+                msg = keys[4].encrypt(bytes(msg, "utf-8"))
+                print("\nMessage crypté : ", msg)
+                s.send(msg)
             except ConnectionResetError:
                 pass
             if msg.lower() == "exit":
@@ -311,6 +321,13 @@ def start_client(ip):
 
 
 if __name__ == "__main__":
+    active_threads = []
+    print("Génération de la clé RSA 4096 bits... Cette opération peut durer une vingtaine de secondes suivant votre ordinateur.\n")
+    keys = [RSA.generate(4096)] #keys[0] = clé de base, keys[1] = clé privée, keys[2] = clé publique, keys[3] = clé publique du contact pour l'import, keys[4] = clé publique du contact
+    keys.append(PKCS1_OAEP.new(keys[0]))
+    keys.append(keys[0].public_key().export_key())
+    print("\nClé privée : ", keys[1])
+    print("\nClé publique : ", keys[2])
     initialize(False)
     print("\nBienvenue Sur ETM.\n")
 
