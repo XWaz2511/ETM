@@ -42,7 +42,7 @@ class thread(Thread):
             l.start()
             print("\n[+] Nouveau client connecté ({}:25115) ! Dès que vous voudrez quitter la discussion, entrez Exit.\n".format(client_ip))
             while True:
-                msg = input("\n")
+                msg = input("\n=> ")
                 modify_cache("save_message", "[{}] {}".format(str(self.ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), msg)
                 try:
                     msg = keys[4].encrypt(bytes(msg, "utf-8"))
@@ -53,18 +53,20 @@ class thread(Thread):
                 if msg.lower() == "Exit":
                     modify_cache("stop_listening")
                 if modify_cache("get_listening_status") == False:
-                    user_choice = str(input("\nVoulez-vous enregistrer cette conversation ? [O/N]\n"))
+                    user_choice = str(input("\n[?] Voulez-vous enregistrer cette conversation ? [O/N]\n=> "))
                     if user_choice.lower() == "o":
                         modify_cache("save_conversation")
                     break
             del(active_threads[int(self.id)])
-            print("\nConnexion fermée !\n")
+            print("\n[!] Connexion fermée !\n")
+            sleep(0.5)
         else:
             try:
                 connection.send(bytes("0", "utf-8"))
             except ConnectionResetError:
                 pass
             print("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip))
+            sleep(0.5)
 
 
 def modify_cache(request, key="", value=""):
@@ -79,7 +81,8 @@ def modify_cache(request, key="", value=""):
             }
             dump(cache_template, cache_file)
             cache_file.close()
-        print("\nLe cache a été vidé !\n")
+        print("\n[!] Le cache a été vidé !\n")
+        sleep(0.5)
     elif request == "save_message":
         with open("./cache.json", "r") as cache_file:
             JSONcontent = cache_file.read()
@@ -107,9 +110,11 @@ def modify_cache(request, key="", value=""):
                 saved_conversation_file.write(str("\n\t\" {} \"\n".format(str(elt[1]))))
                 saved_conversation_file.close()
         if path.exists("./saved_conversation.txt"):
-            print("\nConversation sauvegardée avec succès dans saved_conversation.txt !\n")
+            print("\n[!] Conversation sauvegardée avec succès dans saved_conversation.txt !\n")
+            sleep(0.5)
         else:
-            print("\nÉchec lors de la sauvegarde de la conversation !\n")
+            print("\n[X] Échec lors de la sauvegarde de la conversation !\n")
+            sleep(0.5)
     elif request == "stop_listening":
         with open("./cache.json", "r") as cache_file:
             JSONcontent = cache_file.read()
@@ -128,8 +133,10 @@ def modify_cache(request, key="", value=""):
 
 
 def initialize (force_user_config_regeneration):
-    print("Génération de la clé RSA 4096 bits... Cette opération peut durer une vingtaine de secondes suivant votre ordinateur.\n")
+    print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer une vingtaine de secondes suivant votre ordinateur.\n")
     keys.append(RSA.generate(4096))
+    print("\n[!] La clé a été générée avec succès !\n")
+    sleep(0.5)
     keys.append(" ")
     keys.append(keys[0].public_key().export_key())
     regenerate_user_config(force_user_config_regeneration)
@@ -147,11 +154,11 @@ def listener(socket, pair_ip, key):
             print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
         except ConnectionResetError:
             modify_cache("stop_listening")
-            print("\nVotre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
+            print("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
             break
         if decrypted_data.lower() == "exit":
             modify_cache("stop_listening")
-            print("\nVotre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
+            print("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
             break
         else:
             modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
@@ -163,7 +170,7 @@ def start_server(ip):
     s.bind((str(ip), 25115))
     while True:
         s.listen(1)
-        print("\nServeur démarré sur {}:25115\n".format(str(ip)))
+        print("\n[!] Serveur démarré sur {}:25115\n".format(str(ip)))
         connection, client_infos = s.accept()
         newthread = thread(ip, len(active_threads), client_infos[0])
         if get_user_config()["status"] == "offline":
@@ -184,19 +191,20 @@ def start_client(ip):
         s.connect((str(ip), 25115))
         data = s.recv(16384).decode("utf-8")
     except ConnectionRefusedError:
-        print("\nConnection à l'hôte impossible : l'hôte est hors-ligne.\n")
+        print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne.\n")
+        sleep(0.5)
         s.close()
     else:
         if data == ("1"):
             s.send(keys[2])
             keys.append(s.recv(16384))
             keys.append(PKCS1_OAEP.new(RSA.import_key(keys[3])))
-            print("\nConnection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
+            print("\n[!] Connection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
             modify_cache("reset_cache")
             l = Process(target=listener, args=(s, ip, keys[0].export_key(),))
             l.start()
             while True:
-                msg = input("\n")
+                msg = input("\n=> ")
                 modify_cache("save_message", "[{}] {} ".format(str(ip), str(datetime.now().strftime("%d-%m-%Y %H:%M:%S"))), msg)
                 try:
                     msg = keys[4].encrypt(bytes(msg, "utf-8"))
@@ -207,14 +215,16 @@ def start_client(ip):
                 if msg.lower() == "exit":
                     modify_cache("stop_listening")
                 if modify_cache("get_listening_status") == False:
-                    user_choice = str(input("\nVoulez-vous enregistrer cette conversation ? [O/N]\n"))
+                    user_choice = str(input("\n[?] Voulez-vous enregistrer cette conversation ? [O/N]\n=> "))
                     if user_choice.lower() == "o":
                         modify_cache("save_conversation")
                     break
             s.close()
-            print("\nConnexion fermée !\n")
+            print("\n[!] Connexion fermée !\n")
+            sleep(0.5)
         else:
-            print("\nConnection à l'hôte impossible : l'hôte est hors-ligne.\n")
+            print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne.\n")
+            sleep(0.5)
             s.close()
 
 
@@ -226,11 +236,13 @@ def regenerate_user_config (force_regeneration):
             try:
                 content["name"], content["description"], content["ip"], content["status"]
             except KeyError:
-                print("\nCorruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                sleep(0.5)
                 regenerate_user_config(True)
             else:
                 if len(content) > 4:
-                    print("\nCorruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                    print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                    sleep(0.5)
                     regenerate_user_config(True)
                 else:
                     pass
@@ -248,7 +260,8 @@ def regenerate_user_config (force_regeneration):
         with open("./user.json", "w") as user_config_file:
             dump(user, user_config_file)
             user_config_file.close()
-        print("\nNouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
+        print("\n[!] Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
+        sleep(0.5)
 
 
 def modify_user_config(key: str, value: str):
@@ -262,17 +275,19 @@ def modify_user_config(key: str, value: str):
     with open("./user.json", "w") as user_config_file:
         dump(content, user_config_file)
         user_config_file.close()
-    print("\nLa valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
+    print("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
+    sleep(0.5)
 
 
 def modify_user_status(user_choice=-1):
     if user_choice == -1:
-        user_choice = int(input("\nVoulez-vous être en ligne ou hors-ligne ? [1/2]\n"))
+        user_choice = int(input("\n[?] Voulez-vous être en ligne ou hors-ligne ? [1/2]\n=> "))
     if user_choice == 1:
         modify_user_config("status", "online")
     else:
         modify_user_config("status", "offline")
-    print("\nStatut modifié avec succès !\n")
+    print("\n[!] Statut modifié avec succès !\n")
+    sleep(0.5)
 
 
 def get_user_config():
@@ -288,9 +303,10 @@ def add_contact (name, description, ip):
         with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
     with open("./contacts.csv", "a") as contacts_file:
         Writer = writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = QUOTE_MINIMAL)
-        Writer.writerow([str(name), str(description), str(ip), "offline"])
+        Writer.writerow([str(name), str(description), str(ip)])
         contacts_file.close()
-    print("\nContact crée avec succès !\n")
+    print("\n[!] Contact crée avec succès !\n")
+    sleep(0.5)
 
 
 def display_contacts():
@@ -301,7 +317,8 @@ def display_contacts():
         i = 1
         for row in Reader:
             if len(row) > 0:
-                print("\nContact numéro {}:\n\tNom: {}\n\tDescription: {}\n\tIP: {}\n\tStatut: {}\n".format(str(i), str(row[0]), str(row[1]), str(row[2]), str(row[3])))
+                sleep(0.1)
+                print("\n[-] Contact numéro {}:\n\tNom: {}\n\tDescription: {}\n\tIP: {}\n".format(str(i), str(row[0]), str(row[1]), str(row[2])))
                 i = i + 1
             else:
                 print("\n")
@@ -317,8 +334,7 @@ def getContactInfo(name):
                 contact = {
                     "name": str(row[0]),
                     "description": str(row[1]),
-                    "ip": str(row[2]),
-                    "status": str(row[3])
+                    "ip": str(row[2])
                 }
                 break
         if contact:
@@ -331,58 +347,65 @@ if __name__ == "__main__":
     active_threads = []
     keys = [] #keys[0] = clé de base, keys[1] = clé privée, keys[2] = clé publique, keys[3] = clé publique du contact pour l'import, keys[4] = clé publique du contact
     initialize(False)
-    print("\nBienvenue Sur ETM.\n")
+    print("\nBienvenue Sur ETM ! (V. 1.0.0)\n")
+    sleep(0.5)
 
     while True:
-        user_choice = int(input("\nQuel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n"))
+        user_choice = int(input("\n[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n=> "))
 
         if user_choice == 1:
-            choice = str(input("\nVoulez-vous utiliser l'adresse IP enregistrée ? [O/N]\n"))
+            choice = str(input("\n[?] Voulez-vous utiliser l'adresse IP enregistrée ? [O/N]\n=> "))
             if choice.lower() == "o":
                 user_config = get_user_config()
                 start_server(user_config["ip"])
             else:
-                ip = str(input("\nQuelle adresse IP voulez-vous utiliser ?\n"))
+                ip = str(input("\n[?] Quelle adresse IP voulez-vous utiliser ?\n=> "))
                 start_server(ip)
 
         elif user_choice == 2:
-            choice = int(input("\nVoulez-vous vous connecter à un contact enregistré ou non enregistré ? [1/2]\n"))
+            choice = int(input("\n[?] Voulez-vous vous connecter à un contact enregistré ou non enregistré ? [1/2]\n=> "))
             if choice == 1:
-                name = str(input("\nQuel est le nom de votre contact ?\n"))
+                name = str(input("\n[?] Quel est le nom de votre contact ?\n=> "))
                 contact = getContactInfo(name)
                 if contact != False:
                     start_client(contact["ip"])
                 else:
                     print("\nVous n'avez aucun contact enregistré à ce nom !\n")
+                    sleep(0.5)
             else:
-                ip = str(input("\nQuelle est l'adresse IP de votre contact ?\n"))
+                ip = str(input("\n[?] Quelle est l'adresse IP de votre contact ?\n=> "))
                 start_client(ip)
 
         elif user_choice == 3:
-            key = str(input("\nQuelle clé voulez-vous modifier ? [description / name / ip / status]\n"))
-            value = str(input("\nQuelle nouvelle valeur voulez-vous attribuer à la clé {} ?\n".format(key.lower())))
+            key = str(input("\n[?] Quelle clé voulez-vous modifier ? [description / name / ip]\n=> "))
+            value = str(input("\n[?] Quelle nouvelle valeur voulez-vous attribuer à la clé {} ?\n=> ".format(key.lower())))
             modify_user_config(key, value)
 
         elif user_choice == 4:
             display_contacts()
+            
 
         elif user_choice == 5:
-            contact_name = str(input("\nQuel est le nom de votre contact ?\n"))
-            contact_description = str(input("\nQuelle est la desription de votre contact ?\n"))
-            contact_ip = str(input("\nVeuillez entrer l'adresse ip de votre contact.\n"))
+            contact_name = str(input("\n[?] Quel est le nom de votre contact ?\n=> "))
+            contact_description = str(input("\n[?] Quelle est la desription de votre contact ?\n=> "))
+            contact_ip = str(input("\n[?] Quelle est l'adresse ip de votre contact.\n=> "))
             add_contact(contact_name, contact_description, contact_ip)
 
+
         elif user_choice == 6:
-            choice = int(input("\nVoulez-vous passer en mode en ligne ou en mode hors-ligne ? [1/2]\n"))
+            choice = int(input("\n[?] Voulez-vous passer en mode en ligne ou en mode hors-ligne ? [1/2]\n=> "))
             modify_user_status(choice)
 
         elif user_choice == 7:
-            print("\nBientôt\n")
+            print("\n[!] Bientôt\n")
+            sleep(0.5)
 
         elif user_choice == 8:
-            print("\nBientôt\n")
+            print("\n[!] Bientôt\n")
+            sleep(0.5)
 
         elif user_choice == 9:
             modify_user_status(2)
-            print("\nAu revoir !")
+            print("\n[!] Au revoir ! Appuyez sur une touche pour quitter.")
+            sleep(0.5)
             break
