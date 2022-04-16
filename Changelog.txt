@@ -1,5 +1,15 @@
+# Version Release 1.0.1 (16/04/2022 15h09):
+    # Added :
+        - Affichage de conseils d'utilisation au démarrage suivant le système d'exploitation utilisé ;
+    # Removed :
+        - Import de la bibliothèque pynput retiré car inutile ;
+    # To-do :
+        - Rédiger la documentation, l'aide, et commenter le code ;
+
+--------------------------------------------------
+
 # Version Release 1.0.0 (16/04/2022 13h48):
     # Added :
-        - ETM et toutes les fonctions qui lui sont implémentées sont pleinement fonctionnels. Aucun bug non corrigé n'est connu.
+        - ETM et toutes les fonctions qui lui sont implémentées sont pleinement fonctionnels. Aucun bug non corrigé n'est connu ;
     # To-do :
-        - Rédiger la documentation, l'aide, et commenter le code.
+        - Rédiger la documentation, l'aide, et commenter le code ;

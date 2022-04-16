@@ -5,6 +5,7 @@ version = version_info
 if version[0] < 3:
     print("[X] ETM ne peut fonctionner correctement que sous python 3.0.0 minimum et votre version est actuellement la {}.{}.{} ; Veuillez mettre à jour python et réessayer.".format(str(version[0]), str(version[1]), str(version[2])))
 else:
+
     from csv import writer, QUOTE_MINIMAL, reader
     from json import loads, dump
     import multiprocessing
@@ -18,14 +19,18 @@ else:
     try:
         from Cryptodome.PublicKey import RSA
         from Cryptodome.Cipher import PKCS1_OAEP
-        from pynput import keyboard
     except:
         system("pip3 install pycryptodome")
         system("pip3 install pycryptodomex")
-        system("pip3 install pynput")
         from Cryptodome.PublicKey import RSA
         from Cryptodome.Cipher import PKCS1_OAEP
-        from pynput import keyboard
+
+    if platform == ("linux" or "linux2"):
+        print("\n[!] Sous linux, ETM doit être lancé en tant que sudo pour être certain de bien s'exécuter !")
+    elif platform == ("win32" or "win64"):
+        pass
+    else:
+        print("\nVous exécutez ETM depuis la plateforme [{}] qui n'est pas officiellement prise en charge par le logiciel (les plateformes prises en charge à 100% étant linux et windows). Les développeurs sont dans l'incapacité de vous garantir que le programme s'exécutera et fonctionnera correctement. L'équipe s'excuse d'avance pour la gêne occasionnée.\n".format(str(platform)))
 
     if multiprocessing.get_start_method() != "spawn":
         multiprocessing.set_start_method("spawn")
@@ -461,7 +466,7 @@ else:
     ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
         '''
 
-        print("\n{}\n\t(V. 1.0.0)\n".format(logo))
+        print("\n{}\n\t(V. 1.0.1)\n".format(logo))
 
         sleep(0.5)
 
