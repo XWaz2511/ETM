@@ -1,4 +1,5 @@
 from sys import version_info, platform
+from wave import WAVE_FORMAT_PCM
 
 version = version_info
 
@@ -15,6 +16,7 @@ else:
     from multiprocessing import Process
     from datetime import datetime
     from time import sleep
+    from tkinter import *
 
     try:
         from Cryptodome.PublicKey import RSA
@@ -169,7 +171,7 @@ else:
 
     def initialize (force_user_config_regeneration:bool):
         print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer jusqu'à une trentaine de secondes suivant votre ordinateur.\n")
-        RSA_keys.append(RSA.generate(4096))
+        RSA_keys.append(RSA.generate(1024))
         print("\n[!] La clé a été générée avec succès !\n")
         sleep(0.5)
         RSA_keys.append(" ")
@@ -452,6 +454,62 @@ else:
                 sleep(1)
                 break
 
+    class GUI(Tk):
+        def __init__(self):
+            Tk.__init__(self)
+            self.geometry("1280x720")
+            self.main_page()
+        
+        def main_page(self):
+            try:
+                self.frame.grid_forget()
+            except:
+                pass
+
+            self.frame = Frame(self)
+
+            self.menubar = Menu(self)
+            self.menu1 = Menu(self.menubar, tearoff=0)
+            self.menu1.add_command(label="Revenir au menu principal", command=self.main_page)
+            self.menu1.add_separator()
+            self.menu1.add_command(label="Quitter", command=self.quit)
+            self.menubar.add_cascade(label="Options", menu=self.menu1)
+            self.config(menu=self.menubar)
+
+            self.frame.grid_columnconfigure(index=0, minsize=640)
+            self.frame.grid_columnconfigure(index=1, minsize=640)
+            self.frame.grid_rowconfigure(index=0, minsize=175)
+            self.frame.grid_rowconfigure(index=1, minsize=175)
+            self.frame.grid_rowconfigure(index=2, minsize=175)
+            self.frame.grid_rowconfigure(index=3, minsize=175)
+
+            self.label = Label(self.frame, text="ETM", font=("Arial", 50))
+            self.label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.create_server_button = Button(self.frame, text="Créer un serveur", command=self.server_creation_page)
+            self.create_server_button.grid(row=1, column=0, sticky="NEWS", padx=45, pady=65)
+
+            self.change_user_config_button = Button(self.frame, text="Modifier mes paramètres", command=None)
+            self.change_user_config_button.grid(row=1, column=1, sticky="NEWS", padx=45, pady=65)
+
+            self.create_contact_button = Button(self.frame, text="Ajouter un contact", command=None)
+            self.create_contact_button.grid(row=2, column=0, sticky="NEWS", padx=45, pady=65)
+
+            self.display_contacts_button = Button(self.frame, text="Afficher mes contacts", command=None)
+            self.display_contacts_button.grid(row=2, column=1, sticky="NEWS", padx=45, pady=65)
+
+            self.server_connect_button = Button(self.frame, text="Me connecter à un serveur", command=None)
+            self.server_connect_button.grid(row=3, column=0, columnspan=2, sticky="NEWS", padx=45, pady=65)
+
+            self.frame.grid()
+
+        def server_creation_page(self):
+            self.frame.grid_forget()
+
+
+        def quit(self):
+            self.destroy()
+
 
     if __name__ == "__main__":
         active_threads = []
@@ -470,7 +528,11 @@ else:
 
         sleep(0.5)
 
-        daemon = Process(target=menu(), daemon=True)
-        daemon.start()
+        app = GUI()
+        app.title = "ETM"
+        app.mainloop()
+
+        #daemon = Process(target=menu(), daemon=True)
+        #daemon.start()
 
 # By XWaz \(°o°)/
