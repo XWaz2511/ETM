@@ -1,0 +1,5 @@
+# Version Release 1.0.0 (16/04/2022 13h48):
+    # Added :
+        - ETM et toutes les fonctions qui lui sont implémentées sont pleinement fonctionnels. Aucun bug non corrigé n'est connu.
+    # To-do :
+        - Rédiger la documentation, l'aide, et commenter le code.
