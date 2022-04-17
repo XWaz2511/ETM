@@ -361,12 +361,25 @@ else:
             i = 1
             for row in contacts_file_reader:
                 if len(row) > 0:
-                    sleep(0.1)
                     print("\n[-] Contact numéro {}:\n\tNom: {}\n\tDescription: {}\n\tIP: {}\n".format(str(i), str(row[0]), str(row[1]), str(row[2])))
                     i = i + 1
                 else:
                     print("\n")
             contacts_file.close()
+
+
+    def get_contacts():
+        if path.exists("./contacts.csv"):
+            contacts = []
+            with open("./contacts.csv", "r") as contacts_file:
+                contacts_file_reader = reader(contacts_file, delimiter=" ", quotechar = "\"")
+                for row in contacts_file_reader:
+                    contacts.append([row[0], row[1], row[2]])
+                contacts_file.close()
+                return contacts
+        else:
+            return []
+
 
 
     def getContactInfo(name:str):
@@ -632,11 +645,12 @@ else:
 
             self.frame.grid_columnconfigure(index=0, minsize=640)
             self.frame.grid_columnconfigure(index=1, minsize=640)
-            self.frame.grid_rowconfigure(index=0, minsize=140)
-            self.frame.grid_rowconfigure(index=1, minsize=140)
-            self.frame.grid_rowconfigure(index=2, minsize=140)
-            self.frame.grid_rowconfigure(index=3, minsize=140)
-            self.frame.grid_rowconfigure(index=4, minsize=140)
+            self.frame.grid_rowconfigure(index=0, minsize=115)
+            self.frame.grid_rowconfigure(index=1, minsize=115)
+            self.frame.grid_rowconfigure(index=2, minsize=115)
+            self.frame.grid_rowconfigure(index=3, minsize=115)
+            self.frame.grid_rowconfigure(index=4, minsize=115)
+            self.frame.grid_rowconfigure(index=4, minsize=115)
 
             self.title_label = Label(self.frame, text="Me connecter à un salon", font=("Arial", 30))
             self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
@@ -650,21 +664,40 @@ else:
             self.connect_to_a_contact_radiobutton = Radiobutton(self.frame, variable=self.ip_usage_choice, value=1)
             self.connect_to_a_contact_radiobutton.grid(row=1, column=1, sticky="W", padx=65)
 
+            self.contacts_listbox_label = Label(self.frame, text="Contact auquel se connecter", font=("Arial", 12))
+            self.contacts_listbox_label.grid(row=2, column=0, sticky="NEWS")
+
+            self.contact_choice = StringVar()
+            self.contact_choice.set(1)
+            
+            self.contacts_listbox = Listbox(self.frame, height=2)
+
+            self.contacts_listbox.bind("<<ListboxSelect>>", lambda : self.contact_choice.set(self.contacts_listbox.get(self.contacts_listbox.curselection()[0])))
+
+            self.contacts = get_contacts()
+            if len(self.contacts) > 0:
+                self.i = 0
+                for contact in self.contacts:
+                    self.contacts_listbox.insert(self.i, contact[0])
+                    self.i = self.i + 1
+            
+            self.contacts_listbox.grid(row=2, column=1, sticky="WE", padx=65)
+
             self.connect_to_a_contact_radiobutton_label = Label(self.frame, text="Entrer l'adresse IP du contact", font=("Arial", 12))
-            self.connect_to_a_contact_radiobutton_label.grid(row=2, column=0, sticky="NEWS")
+            self.connect_to_a_contact_radiobutton_label.grid(row=3, column=0, sticky="NEWS")
 
             self.connect_to_a_contact_radiobutton = Radiobutton(self.frame, variable=self.ip_usage_choice, value=2)
-            self.connect_to_a_contact_radiobutton.grid(row=2, column=1, sticky="W", padx=65)
+            self.connect_to_a_contact_radiobutton.grid(row=3, column=1, sticky="W", padx=65)
 
             self.ip_entry_label = Label(self.frame, text="Adresse IP du salon", font=("Arial", 12))
-            self.ip_entry_label.grid(row=3, column=0, sticky="NEWS")
+            self.ip_entry_label.grid(row=4, column=0, sticky="NEWS")
 
             self.ip_value = StringVar()
             self.ip_entry = Entry(self.frame, textvariable=self.ip_value, font=("Arial", 12))
-            self.ip_entry.grid(row=3, column=1, sticky="EW", padx=65)
+            self.ip_entry.grid(row=4, column=1, sticky="EW", padx=65)
 
             self.create_server_button = Button(self.frame, text="Se connecter au salon", command=None, font=("Arial", 12), height=2)
-            self.create_server_button.grid(row=4, column=0, columnspan=2, sticky="EW", padx=45)
+            self.create_server_button.grid(row=5, column=0, columnspan=2, sticky="EW", padx=45)
 
             self.frame.grid()
 
