@@ -1,3 +1,4 @@
+from socket import SocketType
 from sys import version_info, platform
 from tkinter import messagebox
 from wave import WAVE_FORMAT_PCM
@@ -49,6 +50,8 @@ else:
         def run(self, connection:socket, server_error_code:int, client_ip:str):
             if server_error_code == 1:
                 try:
+                    sock = connection
+                    IP = client_ip
                     connection.send(bytes("1", "utf-8"))
                     RSA_keys.append(connection.recv(16384))
                     connection.send(RSA_keys[2])
@@ -56,7 +59,7 @@ else:
                 except ConnectionResetError:
                     pass          
                 modify_cache("reset_cache")
-                listener_process = Process(target=listener, args=(connection, self.client_ip, RSA_keys[0].export_key(),), daemon=True)
+                listener_process = Process(target=listener, args=(socket, IP, RSA_keys[0].export_key(),), daemon=True)
                 listener_process.start()
                 print("\n[+] Nouveau client connecté ({}:25115) ! Dès que vous voudrez quitter la discussion, entrez Exit.\n".format(client_ip))
             else:
@@ -67,24 +70,22 @@ else:
                 print("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip))
                 
 
-
-    def send_message(message):
-        message = input("\n=> ")
+    def send_message(discussion_content, message):
+        discussion_content = "{}{}\n".format(discussion_content, message)
+        app.discussion_display_label.configure(text=discussion_content)
         modify_cache("save_message", "[{}] {}".format(str(ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), message)
         try:
-            connection.send(RSA_keys[4].encrypt(bytes(message, "utf-8")))
+            socket.send(RSA_keys[4].encrypt(bytes(message, "utf-8")))
         except ConnectionResetError:
             pass
         if message.lower() == "exit":
             modify_cache("stop_listening")
         if modify_cache("get_listening_status") == False:
-            user_choice = input("\n[?] Voulez-vous enregistrer cette conversation ? [O/N]\n=> ")
-            user_choice = verify_user_entry("str", user_choice, ["o", "n"], "[?] Voulez-vous enregistrer cette conversation ? [O/N]")
-            if user_choice.lower() == "o":
+            listener_process.terminate()                
+            del(active_threads[-1])
+            app.information("Connexion fermée !")
+            if app.askyesno("Voulez-vous sauvegarder cette discussion ?"):
                 modify_cache("save_conversation")
-        listener_process.terminate()                
-        del(active_threads[int(self.id)])
-        print("\n[!] Connexion fermée !\n")
 
 
     def verify_user_entry(expected_type:str, value, desired_value:list, input_text:str):
@@ -148,10 +149,10 @@ else:
                     saved_conversation_file.write(str("\n\t\" {} \"\n".format(str(elt[1]))))
                     saved_conversation_file.close()
             if path.exists("./saved_conversation.txt"):
-                print("\n[!] Conversation sauvegardée avec succès dans saved_conversation.txt !\n")
+                app.information("Conversation sauvegardée avec succès dans saved_conversation.txt !")
                 
             else:
-                print("\n[X] Échec lors de la sauvegarde de la conversation !\n")
+                app.alert("Échec lors de la sauvegarde de la conversation !")
                 
         elif request == "stop_listening":
             with open("./cache.json", "r") as cache_file:
@@ -171,10 +172,7 @@ else:
 
 
     def initialize (force_user_config_regeneration:bool):
-        print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer jusqu'à une trentaine de secondes suivant votre ordinateur.\n")
         RSA_keys.append(RSA.generate(1024))
-        print("\n[!] La clé a été générée avec succès !\n")
-        
         RSA_keys.append(" ")
         RSA_keys.append(RSA_keys[0].public_key().export_key())
         regenerate_user_config(force_user_config_regeneration)
@@ -191,17 +189,18 @@ else:
                 print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
             except ConnectionResetError:
                 modify_cache("stop_listening")
-                print("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
+                discussion_content = "{}Votre correspondant s'est déconnecté !\n".format(discussion_content)
+                app.discussion_display_label.configure(text=discussion_content)
                 break
             if decrypted_data.lower() == "exit":
                 modify_cache("stop_listening")
-                print("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
+                print("Votre correspondant s'est déconnecté !")
                 break
             else:
                 modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
 
     
-    def server(s, ip):
+    def server(s, ip, active_threads):
         while True:
             s.listen(1)
             connection, client_informations = s.accept()
@@ -240,48 +239,37 @@ else:
                 discussion_content=""
                 discussion_content = "{}Serveur démarré sur {}:25115.\n".format(discussion_content, str(ip))
                 app.discussion_display_label.configure(text=discussion_content)
-                server_process = Process(target=server, args=(s,ip,))
+                server_process = Process(target=server, args=(s,ip,active_threads,))
                 server_process.start()
 
 
     def start_client(ip:str):
-        message = ""
         try:
             s = socket(AF_INET, SOCK_STREAM)
+            print(ip)
             s.connect((str(ip), 25115))
             server_error_code = s.recv(16384).decode("utf-8")
         except ConnectionRefusedError:
-            print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
-            
+            app.warning("Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.")          
             s.close()
         else:
+            print(server_error_code)
             if server_error_code == ("1"):
                 s.send(RSA_keys[2])
                 RSA_keys.append(s.recv(16384))
                 RSA_keys.append(PKCS1_OAEP.new(RSA.import_key(RSA_keys[3])))
-                print("\n[!] Connection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
+                sock = s
+                IP = ip
+                app.information("Connection à l'hôte réussie !")
                 modify_cache("reset_cache")
                 listener_process = Process(target=listener, args=(s, ip, RSA_keys[0].export_key(),), daemon=True)
                 listener_process.start()
-                while True:
-                    message = input("\n=> ")
-                    modify_cache("save_message", "[{}] {} ".format(str(ip), str(datetime.now().strftime("%d-%m-%Y %H:%M:%S"))), message)
-                    try:
-                        s.send(RSA_keys[4].encrypt(bytes(message, "utf-8")))
-                    except ConnectionResetError:
-                        pass
-                    if message.lower() == "exit":
-                        modify_cache("stop_listening")
-                    if modify_cache("get_listening_status") == False:
-                        user_choice = input("\n[?] Voulez-vous enregistrer cette conversation ? [O/N]\n=> ")
-                        user_choice = verify_user_entry("str", user_choice, ["o", "n"], "[?] Voulez-vous enregistrer cette conversation ? [O/N]")
-                        if user_choice.lower() == "o":
-                            modify_cache("save_conversation")
-                        break
-                listener_process.terminate()
-                s.close()
-                print("\n[!] Connexion fermée !\n")
-                
+                app.discussion_page()
+                discussion_content=""
+                discussion_content = "{}Connection à l'hôte réussie !\n".format(discussion_content)
+                app.discussion_display_label.configure(text=discussion_content)
+                server_process = Process(target=server, args=(s,ip,))
+                server_process.start()
             else:
                 print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
                 
@@ -521,6 +509,10 @@ else:
         def alert(self, message):
             messagebox.showerror("Erreur", message)
 
+        
+        def askyesno(self, message):
+            messagebox.askyesno("?", message)
+
 
         def main_page(self):
             try:
@@ -725,7 +717,7 @@ else:
             self.ip_entry = Entry(self.frame, textvariable=self.ip_value, font=("Arial", 12))
             self.ip_entry.grid(row=4, column=1, sticky="EW", padx=65)
 
-            self.create_server_button = Button(self.frame, text="Se connecter au salon", command=None, font=("Arial", 12), height=2)
+            self.create_server_button = Button(self.frame, text="Se connecter au salon", command=lambda : start_client(self.ip_value.get()), font=("Arial", 12), height=2)
             self.create_server_button.grid(row=5, column=0, columnspan=2, sticky="EW", padx=45)
 
             self.frame.grid()
@@ -832,7 +824,7 @@ else:
             self.message_entry = Entry(self.frame, textvariable=self.message_entry_value, font=("Arial", 12))
             self.message_entry.grid(row=3, column=0, sticky="NEWS", padx=45)
 
-            self.message_submit_button = Button(self.frame, text="Envoyer", command=None, font=("Arial", 12), height=2)
+            self.message_submit_button = Button(self.frame, text="Envoyer", command=lambda : send_message(discussion_content, self.message_entry_value.get()), font=("Arial", 12), height=2)
             self.message_submit_button.grid(row=3, column=1, sticky="NEWS", padx=45)
 
             self.frame.grid()
@@ -846,8 +838,11 @@ else:
     if __name__ == "__main__":
         active_threads = []
         RSA_keys = [] #RSA_keys[0] = clé de base, RSA_keys[1] = clé privée, RSA_keys[2] = clé publique, RSA_keys[3] = clé publique du contact pour l'import, RSA_keys[4] = clé publique du contact
-        discussion_content = ""
         initialize(False)
+        discussion_content = ""
+        sock = SocketType
+        IP = ""
+        listener_process = Process(target=listener, args=(sock, IP, RSA_keys[0].export_key(),), daemon=True)
 
         app = GUI()
         app.title = "ETM"
