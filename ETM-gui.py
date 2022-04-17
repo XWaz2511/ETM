@@ -374,7 +374,10 @@ else:
             with open("./contacts.csv", "r") as contacts_file:
                 contacts_file_reader = reader(contacts_file, delimiter=" ", quotechar = "\"")
                 for row in contacts_file_reader:
-                    contacts.append([row[0], row[1], row[2]])
+                    try:
+                        contacts.append([row[0], row[1], row[2]])
+                    except:
+                        pass
                 contacts_file.close()
                 return contacts
         else:
@@ -525,10 +528,10 @@ else:
             self.change_user_config_button = Button(self.frame, text="Modifier mes paramètres", command=self.configuration_page, font=("Arial", 12))
             self.change_user_config_button.grid(row=1, column=1, sticky="NEWS", padx=45, pady=65)
 
-            self.create_contact_button = Button(self.frame, text="Ajouter un contact", command=None, font=("Arial", 12))
+            self.create_contact_button = Button(self.frame, text="Ajouter un contact", command=self.contact_creation_page, font=("Arial", 12))
             self.create_contact_button.grid(row=2, column=0, sticky="NEWS", padx=45, pady=65)
 
-            self.display_contacts_button = Button(self.frame, text="Afficher mes contacts", command=None, font=("Arial", 12))
+            self.display_contacts_button = Button(self.frame, text="Afficher mes contacts", command=self.contacts_display_page, font=("Arial", 12))
             self.display_contacts_button.grid(row=2, column=1, sticky="NEWS", padx=45, pady=65)
 
             self.server_connect_button = Button(self.frame, text="Me connecter à un salon", command=self.server_connection_page, font=("Arial", 12))
@@ -645,12 +648,12 @@ else:
 
             self.frame.grid_columnconfigure(index=0, minsize=640)
             self.frame.grid_columnconfigure(index=1, minsize=640)
-            self.frame.grid_rowconfigure(index=0, minsize=115)
-            self.frame.grid_rowconfigure(index=1, minsize=115)
-            self.frame.grid_rowconfigure(index=2, minsize=115)
-            self.frame.grid_rowconfigure(index=3, minsize=115)
-            self.frame.grid_rowconfigure(index=4, minsize=115)
-            self.frame.grid_rowconfigure(index=4, minsize=115)
+            self.frame.grid_rowconfigure(index=0, minsize=110)
+            self.frame.grid_rowconfigure(index=1, minsize=110)
+            self.frame.grid_rowconfigure(index=2, minsize=110)
+            self.frame.grid_rowconfigure(index=3, minsize=110)
+            self.frame.grid_rowconfigure(index=4, minsize=110)
+            self.frame.grid_rowconfigure(index=4, minsize=110)
 
             self.title_label = Label(self.frame, text="Me connecter à un salon", font=("Arial", 30))
             self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
@@ -670,9 +673,9 @@ else:
             self.contact_choice = StringVar()
             self.contact_choice.set(1)
             
-            self.contacts_listbox = Listbox(self.frame, height=2)
+            self.contacts_listbox = Listbox(self.frame, font=("Arial", 12))
 
-            self.contacts_listbox.bind("<<ListboxSelect>>", lambda : self.contact_choice.set(self.contacts_listbox.get(self.contacts_listbox.curselection()[0])))
+            self.contacts_listbox.bind("<<ListboxSelect>>", lambda event=None: self.contact_choice.set(self.contacts_listbox.get(self.contacts_listbox.curselection()[0])))
 
             self.contacts = get_contacts()
             if len(self.contacts) > 0:
@@ -698,6 +701,79 @@ else:
 
             self.create_server_button = Button(self.frame, text="Se connecter au salon", command=None, font=("Arial", 12), height=2)
             self.create_server_button.grid(row=5, column=0, columnspan=2, sticky="EW", padx=45)
+
+            self.frame.grid()
+
+
+        def contact_creation_page(self):
+            self.frame.grid_forget()
+
+            self.frame = Frame(self)
+
+            self.frame.grid_columnconfigure(index=0, minsize=640)
+            self.frame.grid_columnconfigure(index=1, minsize=640)
+            self.frame.grid_rowconfigure(index=0, minsize=140)
+            self.frame.grid_rowconfigure(index=1, minsize=140)
+            self.frame.grid_rowconfigure(index=2, minsize=140)
+            self.frame.grid_rowconfigure(index=3, minsize=140)
+            self.frame.grid_rowconfigure(index=4, minsize=140)
+
+            self.title_label = Label(self.frame, text="Ajouter un contact", font=("Arial", 30))
+            self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.contact_name_value = StringVar()
+
+            self.contact_name_entry_label = Label(self.frame, text="Entrer le nom du contact", font=("Arial", 12))
+            self.contact_name_entry_label.grid(row=1, column=0, sticky="NEWS")
+
+            self.contact_name_entry = Entry(self.frame, textvariable=self.contact_name_value, font=("Arial", 12))
+            self.contact_name_entry.grid(row=1, column=1, sticky="EW", padx=65)
+
+            self.contact_description_value = StringVar()
+
+            self.contact_description_entry_label = Label(self.frame, text="Entrer la description du contact", font=("Arial", 12))
+            self.contact_description_entry_label.grid(row=2, column=0, sticky="NEWS")
+
+            self.contact_description_entry = Entry(self.frame, textvariable=self.contact_description_value, font=("Arial", 12))
+            self.contact_description_entry.grid(row=2, column=1, sticky="EW", padx=65)
+
+            self.contact_ip_value = StringVar()
+
+            self.contact_ip_entry_label = Label(self.frame, text="Entrer l'adresse IP du contact", font=("Arial", 12))
+            self.contact_ip_entry_label.grid(row=3, column=0, sticky="NEWS")
+
+            self.contact_ip_entry = Entry(self.frame, textvariable=self.contact_ip_value, font=("Arial", 12))
+            self.contact_ip_entry.grid(row=3, column=1, sticky="EW", padx=65)
+
+            self.create_server_button = Button(self.frame, text="Ajouter le contact", command=None, font=("Arial", 12), height=2)
+            self.create_server_button.grid(row=4, column=0, columnspan=2, sticky="EW", padx=45)
+
+            self.frame.grid()
+
+
+        def contacts_display_page(self):
+            self.frame.grid_forget()
+
+            self.frame = Frame(self)
+
+            self.frame.grid_columnconfigure(index=0, minsize=1280)
+            self.frame.grid_rowconfigure(index=0, minsize=140)
+
+            self.title_label = Label(self.frame, text="Afficher mes contacts", font=("Arial", 30))
+            self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.contacts = get_contacts()
+
+            self.i = 1
+            for contact in self.contacts:
+                self.temp_labelframe = LabelFrame(self.frame, text=str("Contact {}".format(str(self.i))), font=("Arial", 12), padx=20)
+
+                Label(self.temp_labelframe, text=str("Nom : [ {} ] ; IP : [ {} ] ; Description : [ {} ] ;".format(contact[0], contact[2], contact[1])), font=("Arial", 12)).grid(sticky="NEWS", column=0, row=0, padx=5, pady=5)
+
+                self.temp_labelframe.grid(row=self.i, column=0, sticky="NEWS", padx=45, pady=10)
+                self.frame.grid_rowconfigure(index=self.i, pad=5)
+                self.temp_labelframe.grid_columnconfigure(index=0, minsize=1150)
+                self.i = self.i + 1
 
             self.frame.grid()
 
