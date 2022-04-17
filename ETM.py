@@ -358,6 +358,7 @@ else:
                     i = i + 1
                 else:
                     print("\n")
+            contacts_file.close()
 
 
     def getContactInfo(name:str):
@@ -466,7 +467,7 @@ else:
     ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
         '''
 
-        print("\n{}\n\t(V. 1.0.1)\n".format(logo))
+        print("\n{}\n\t(V. 1.0.2)\n".format(logo))
 
         sleep(0.5)
 
