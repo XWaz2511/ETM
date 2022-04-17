@@ -1,4 +1,5 @@
 from sys import version_info, platform
+from tkinter import messagebox
 from wave import WAVE_FORMAT_PCM
 
 version = version_info
@@ -76,14 +77,14 @@ else:
                 listener_process.terminate()                
                 del(active_threads[int(self.id)])
                 print("\n[!] Connexion fermée !\n")
-                sleep(0.5)
+                
             else:
                 try:
                     connection.send(bytes("0", "utf-8"))
                 except ConnectionResetError:
                     pass
                 print("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip))
-                sleep(0.5)
+                
 
 
     def verify_user_entry(expected_type:str, value, desired_value:list, input_text:str):
@@ -92,14 +93,14 @@ else:
                 value = eval("{}(value)".format(expected_type))
             except ValueError:
                 print("\nVous avez entré une valeur de mauvais type ! Une valeur de type {} est attendue.\n".format(expected_type))
-                sleep(1)
+                
                 value = input("\n{}\n=> ".format(input_text))
             else:
                 if (type(value) == "str") and (len(desired_value) > 0):
                     value = value.lower()
                 if (len(desired_value) > 0) and (value not in desired_value):
                     print("\nVous avez entré une mauvaise valeur ! Une valeur parmi les suivantes est attendue : {}. \n".format(desired_value))
-                    sleep(1)
+                    
                     value = input("\n{}\n=> ".format(input_text))
                 else:
                     break
@@ -119,7 +120,7 @@ else:
                 dump(cache_template, cache_file)
                 cache_file.close()
             print("\n[!] Le cache a été vidé !\n")
-            sleep(0.5)
+            
         elif request == "save_message":
             with open("./cache.json", "r") as cache_file:
                 JSONcontent = cache_file.read()
@@ -148,10 +149,10 @@ else:
                     saved_conversation_file.close()
             if path.exists("./saved_conversation.txt"):
                 print("\n[!] Conversation sauvegardée avec succès dans saved_conversation.txt !\n")
-                sleep(0.5)
+                
             else:
                 print("\n[X] Échec lors de la sauvegarde de la conversation !\n")
-                sleep(0.5)
+                
         elif request == "stop_listening":
             with open("./cache.json", "r") as cache_file:
                 JSON_cache_content = cache_file.read()
@@ -173,7 +174,7 @@ else:
         print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer jusqu'à une trentaine de secondes suivant votre ordinateur.\n")
         RSA_keys.append(RSA.generate(1024))
         print("\n[!] La clé a été générée avec succès !\n")
-        sleep(0.5)
+        
         RSA_keys.append(" ")
         RSA_keys.append(RSA_keys[0].public_key().export_key())
         regenerate_user_config(force_user_config_regeneration)
@@ -207,7 +208,7 @@ else:
         while True:
             s.listen(1)
             print("\n[!] Serveur démarré sur {}:25115. Si aucun client ne se connecte, quittez ETM et relancez-le pour revenir au menu.\n".format(str(ip)))
-            sleep(1)
+            
             connection, client_informations = s.accept()
             newthread = thread(ip, len(active_threads), client_informations[0])
             if get_user_config()["status"] == "offline":
@@ -229,7 +230,7 @@ else:
             server_error_code = s.recv(16384).decode("utf-8")
         except ConnectionRefusedError:
             print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
-            sleep(0.5)
+            
             s.close()
         else:
             if server_error_code == ("1"):
@@ -258,10 +259,10 @@ else:
                 listener_process.terminate()
                 s.close()
                 print("\n[!] Connexion fermée !\n")
-                sleep(0.5)
+                
             else:
                 print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
-                sleep(0.5)
+                
                 s.close()
 
 
@@ -274,12 +275,12 @@ else:
                     user_config_content["name"], user_config_content["description"], user_config_content["ip"], user_config_content["status"]
                 except KeyError:
                     print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
-                    sleep(0.5)
+                    
                     regenerate_user_config(True)
                 else:
                     if len(user_config_content) > 4:
                         print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
-                        sleep(0.5)
+                        
                         regenerate_user_config(True)
                     else:
                         pass
@@ -298,22 +299,27 @@ else:
                 dump(user_config_file_template, user_config_file)
                 user_config_file.close()
             print("\n[!] Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
-            sleep(0.5)
+            
 
 
-    def modify_user_config(key:str, value:str):
+    def modify_user_config(keys:list, values:list):
         if not path.exists("./user.json"):
             regenerate_user_config(False)
-        with open("./user.json", "r") as user_config_file:
-            JSON_user_config_content = user_config_file.read()
-            user_config_content = loads(JSON_user_config_content)
-            user_config_content[key] = value
-            user_config_file.close()
-        with open("./user.json", "w") as user_config_file:
-            dump(user_config_content, user_config_file)
-            user_config_file.close()
-        print("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
-        sleep(0.5)
+        for i in range (0, len(keys)):
+            key = keys[i]
+            value = values[i]
+            with open("./user.json", "r") as user_config_file:
+                JSON_user_config_content = user_config_file.read()
+                user_config_content = loads(JSON_user_config_content)
+                user_config_content[key] = value
+                user_config_file.close()
+            with open("./user.json", "w") as user_config_file:
+                dump(user_config_content, user_config_file)
+                user_config_file.close()
+            print("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
+        if not len(keys) == 1:
+            GUI.information(self=GUI, message="Vos réglages ont été modifiés avec succès !")
+        
 
 
     def modify_user_status(user_choice:int=-1):
@@ -321,11 +327,11 @@ else:
             user_choice = input("\n[?] Voulez-vous être en ligne ou hors-ligne ? [1/2]\n=> ")
             user_choice = verify_user_entry("int", user_choice, [1, 2], "[?] Voulez-vous être en ligne ou hors-ligne ? [1/2]")
         if user_choice == 1:
-            modify_user_config("status", "online")
+            modify_user_config(["status"], ["online"])
         else:
-            modify_user_config("status", "offline")
+            modify_user_config(["status"], ["offline"])
         print("\n[!] Statut modifié avec succès !\n")
-        sleep(0.5)
+        
 
 
     def get_user_config():
@@ -344,7 +350,7 @@ else:
             contacts_file_writer.writerow([str(name), str(description), str(ip)])
             contacts_file.close()
         print("\n[!] Contact crée avec succès !\n")
-        sleep(0.5)
+        
 
 
     def display_contacts():
@@ -360,6 +366,7 @@ else:
                     i = i + 1
                 else:
                     print("\n")
+            contacts_file.close()
 
 
     def getContactInfo(name:str):
@@ -408,7 +415,7 @@ else:
                         start_client(contact["ip"])
                     else:
                         print("\nVous n'avez aucun contact enregistré à ce nom !\n")
-                        sleep(0.5)
+                        
                 else:
                     ip = input("\n[?] Quelle est l'adresse IP de votre contact ?\n=> ")
                     ip = verify_user_entry("str", ip, [], "[?] Quelle est l'adresse IP de votre contact ?")
@@ -442,16 +449,16 @@ else:
 
             elif user_choice == 7:
                 print("\n[!] Bientôt\n")
-                sleep(0.5)
+                
 
             elif user_choice == 8:
                 print("\n[!] Bientôt\n")
-                sleep(0.5)
+                
 
             elif user_choice == 9:
                 modify_user_status(2)
                 print("\n[!] Au revoir !")
-                sleep(1)
+                
                 break
 
     class GUI(Tk):
@@ -460,6 +467,19 @@ else:
             self.geometry("1280x720")
             self.main_page()
         
+
+        def information(self, message):
+            messagebox.showinfo("Information", message)
+
+
+        def warning(self, message):
+            messagebox.showwarning("Avertissement", message)
+
+
+        def alert(self, message):
+            messagebox.showerror("Erreur", message)
+
+
         def main_page(self):
             try:
                 self.frame.grid_forget()
@@ -483,31 +503,174 @@ else:
             self.frame.grid_rowconfigure(index=2, minsize=175)
             self.frame.grid_rowconfigure(index=3, minsize=175)
 
-            self.label = Label(self.frame, text="ETM", font=("Arial", 50))
-            self.label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+            self.main_title_label = Label(self.frame, text="ETM", font=("Arial", 50))
+            self.main_title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
 
-            self.create_server_button = Button(self.frame, text="Créer un serveur", command=self.server_creation_page)
+            self.create_server_button = Button(self.frame, text="Créer un salon", command=self.server_creation_page, font=("Arial", 12))
             self.create_server_button.grid(row=1, column=0, sticky="NEWS", padx=45, pady=65)
 
-            self.change_user_config_button = Button(self.frame, text="Modifier mes paramètres", command=None)
+            self.change_user_config_button = Button(self.frame, text="Modifier mes paramètres", command=self.configuration_page, font=("Arial", 12))
             self.change_user_config_button.grid(row=1, column=1, sticky="NEWS", padx=45, pady=65)
 
-            self.create_contact_button = Button(self.frame, text="Ajouter un contact", command=None)
+            self.create_contact_button = Button(self.frame, text="Ajouter un contact", command=None, font=("Arial", 12))
             self.create_contact_button.grid(row=2, column=0, sticky="NEWS", padx=45, pady=65)
 
-            self.display_contacts_button = Button(self.frame, text="Afficher mes contacts", command=None)
+            self.display_contacts_button = Button(self.frame, text="Afficher mes contacts", command=None, font=("Arial", 12))
             self.display_contacts_button.grid(row=2, column=1, sticky="NEWS", padx=45, pady=65)
 
-            self.server_connect_button = Button(self.frame, text="Me connecter à un serveur", command=None)
+            self.server_connect_button = Button(self.frame, text="Me connecter à un salon", command=self.server_connection_page, font=("Arial", 12))
             self.server_connect_button.grid(row=3, column=0, columnspan=2, sticky="NEWS", padx=45, pady=65)
 
             self.frame.grid()
 
+
         def server_creation_page(self):
             self.frame.grid_forget()
 
+            self.frame = Frame(self)
+
+            self.frame.grid_columnconfigure(index=0, minsize=640)
+            self.frame.grid_columnconfigure(index=1, minsize=640)
+            self.frame.grid_rowconfigure(index=0, minsize=140)
+            self.frame.grid_rowconfigure(index=1, minsize=140)
+            self.frame.grid_rowconfigure(index=2, minsize=140)
+            self.frame.grid_rowconfigure(index=3, minsize=140)
+            self.frame.grid_rowconfigure(index=4, minsize=140)
+
+            self.title_label = Label(self.frame, text="Héberger un salon", font=("Arial", 30))
+            self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.ip_usage_choice = StringVar()
+            self.ip_usage_choice.set(2)
+
+            self.use_saved_ip_radiobuttonbutton_label = Label(self.frame, text="Utiliser l'adresse IP enregistrée", font=("Arial", 12))
+            self.use_saved_ip_radiobuttonbutton_label.grid(row=1, column=0, sticky="NEWS", padx=45, pady=10)
+
+            self.use_saved_ip_radiobuttonbutton = Radiobutton(self.frame, variable=self.ip_usage_choice, value=1)
+            self.use_saved_ip_radiobuttonbutton.grid(row=1, column=1, sticky="W", padx=65)
+
+            self.enter_ip_radiobuttonbutton_label = Label(self.frame, text="Entrer l'adresse IP à utiliser", font=("Arial", 12))
+            self.enter_ip_radiobuttonbutton_label.grid(row=2, column=0, sticky="NEWS", padx=45, pady=10)
+
+            self.enter_ip_radiobuttonbutton = Radiobutton(self.frame, variable=self.ip_usage_choice, value=2)
+            self.enter_ip_radiobuttonbutton.grid(row=2, column=1, sticky="W", padx=65)
+
+            self.ip_entry_label = Label(self.frame, text="Adresse IP à utiliser", font=("Arial", 12))
+            self.ip_entry_label.grid(row=3, column=0, sticky="NEWS")
+
+            self.ip_value = StringVar()
+            self.ip_entry = Entry(self.frame, textvariable=self.ip_value, font=("Arial", 12))
+            self.ip_entry.grid(row=3, column=1, sticky="EW", padx=65)
+
+            self.create_server_button = Button(self.frame, text="Héberger le salon", command=None, font=("Arial", 12), height=2)
+            self.create_server_button.grid(row=4, column=0, columnspan=2, sticky="EW", padx=45)
+
+            self.frame.grid()
+
+
+        def configuration_page(self):
+            user_config = get_user_config()
+            
+            self.frame.grid_forget()
+
+            self.frame = Frame(self)
+
+            self.frame.grid_columnconfigure(index=0, minsize=640)
+            self.frame.grid_columnconfigure(index=1, minsize=640)
+            self.frame.grid_rowconfigure(index=0, minsize=115)
+            self.frame.grid_rowconfigure(index=1, minsize=115)
+            self.frame.grid_rowconfigure(index=2, minsize=115)
+            self.frame.grid_rowconfigure(index=3, minsize=115)
+            self.frame.grid_rowconfigure(index=4, minsize=115)
+            self.frame.grid_rowconfigure(index=5, minsize=115)
+
+            self.title_label = Label(self.frame, text="Modifier mes paramètres", font=("Arial", 30))
+            self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.name_entry_label = Label(self.frame, text="Votre nom d'utilisateur", font=("Arial", 12))
+            self.name_entry_label.grid(row=1, column=0, sticky="NEWS")
+
+            self.name_value = StringVar()
+            self.name_value.set(user_config["name"])
+            self.name_entry = Entry(self.frame, textvariable=self.name_value, font=("Arial", 12))
+            self.name_entry.grid(row=2, column=0, sticky="EWN", padx=65)
+
+            self.description_entry_label = Label(self.frame, text="Votre description", font=("Arial", 12))
+            self.description_entry_label.grid(row=1, column=1, sticky="NEWS")
+
+            self.description_value = StringVar()
+            self.description_value.set(user_config["description"])
+            self.description_entry = Entry(self.frame, textvariable=self.description_value, font=("Arial", 12))
+            self.description_entry.grid(row=2, column=1, sticky="EWN", padx=65)
+
+            self.ip_entry_label = Label(self.frame, text="Votre adresse IP", font=("Arial", 12))
+            self.ip_entry_label.grid(row=3, column=0, sticky="NEWS")
+
+            self.ip_value = StringVar()
+            self.ip_value.set(user_config["ip"])
+            self.ip_entry = Entry(self.frame, textvariable=self.ip_value, font=("Arial", 12))
+            self.ip_entry.grid(row=4, column=0, sticky="EWN", padx=65)
+
+            self.status_entry_label = Label(self.frame, text="Votre statut", font=("Arial", 12))
+            self.status_entry_label.grid(row=3, column=1, sticky="NEWS")
+
+            self.status_value = StringVar()
+            self.status_value.set(user_config["status"])
+            self.status_entry = Entry(self.frame, textvariable=self.status_value, font=("Arial", 12))
+            self.status_entry.grid(row=4, column=1, sticky="EWN", padx=65)
+
+            self.modify_configuration_button = Button(self.frame, text="Modifier mes paramètres", command=lambda : modify_user_config(["name", "description", "ip", "status"], [self.name_value.get(), self.description_value.get(), self.ip_value.get(), self.status_value.get()]), font=("Arial", 12), height=2)
+            self.modify_configuration_button.grid(row=5, column=0, columnspan=2, sticky="EW", padx=45)
+
+            self.frame.grid()
+
+
+        def server_connection_page(self):
+            self.frame.grid_forget()
+
+            self.frame = Frame(self)
+
+            self.frame.grid_columnconfigure(index=0, minsize=640)
+            self.frame.grid_columnconfigure(index=1, minsize=640)
+            self.frame.grid_rowconfigure(index=0, minsize=140)
+            self.frame.grid_rowconfigure(index=1, minsize=140)
+            self.frame.grid_rowconfigure(index=2, minsize=140)
+            self.frame.grid_rowconfigure(index=3, minsize=140)
+            self.frame.grid_rowconfigure(index=4, minsize=140)
+
+            self.title_label = Label(self.frame, text="Me connecter à un salon", font=("Arial", 30))
+            self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.ip_usage_choice = StringVar()
+            self.ip_usage_choice.set(2)
+
+            self.connect_to_a_contact_radiobutton_label = Label(self.frame, text="Se connecter à un contact", font=("Arial", 12))
+            self.connect_to_a_contact_radiobutton_label.grid(row=1, column=0, sticky="NEWS")
+
+            self.connect_to_a_contact_radiobutton = Radiobutton(self.frame, variable=self.ip_usage_choice, value=1)
+            self.connect_to_a_contact_radiobutton.grid(row=1, column=1, sticky="W", padx=65)
+
+            self.connect_to_a_contact_radiobutton_label = Label(self.frame, text="Entrer l'adresse IP du contact", font=("Arial", 12))
+            self.connect_to_a_contact_radiobutton_label.grid(row=2, column=0, sticky="NEWS")
+
+            self.connect_to_a_contact_radiobutton = Radiobutton(self.frame, variable=self.ip_usage_choice, value=2)
+            self.connect_to_a_contact_radiobutton.grid(row=2, column=1, sticky="W", padx=65)
+
+            self.ip_entry_label = Label(self.frame, text="Adresse IP du salon", font=("Arial", 12))
+            self.ip_entry_label.grid(row=3, column=0, sticky="NEWS")
+
+            self.ip_value = StringVar()
+            self.ip_entry = Entry(self.frame, textvariable=self.ip_value, font=("Arial", 12))
+            self.ip_entry.grid(row=3, column=1, sticky="EW", padx=65)
+
+            self.create_server_button = Button(self.frame, text="Se connecter au salon", command=None, font=("Arial", 12), height=2)
+            self.create_server_button.grid(row=4, column=0, columnspan=2, sticky="EW", padx=45)
+
+            self.frame.grid()
+
 
         def quit(self):
+            modify_user_status(2)
             self.destroy()
 
 
@@ -515,18 +678,6 @@ else:
         active_threads = []
         RSA_keys = [] #RSA_keys[0] = clé de base, RSA_keys[1] = clé privée, RSA_keys[2] = clé publique, RSA_keys[3] = clé publique du contact pour l'import, RSA_keys[4] = clé publique du contact
         initialize(False)
-        logo = '''                   
-    ███████╗████████╗███╗   ███╗
-    ██╔════╝╚══██╔══╝████╗ ████║
-    █████╗     ██║   ██╔████╔██║
-    ██╔══╝     ██║   ██║╚██╔╝██║
-    ███████╗   ██║   ██║ ╚═╝ ██║
-    ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
-        '''
-
-        print("\n{}\n\t(V. 1.0.1)\n".format(logo))
-
-        sleep(0.5)
 
         app = GUI()
         app.title = "ETM"
