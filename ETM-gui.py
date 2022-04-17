@@ -59,25 +59,6 @@ else:
                 listener_process = Process(target=listener, args=(connection, self.client_ip, RSA_keys[0].export_key(),), daemon=True)
                 listener_process.start()
                 print("\n[+] Nouveau client connecté ({}:25115) ! Dès que vous voudrez quitter la discussion, entrez Exit.\n".format(client_ip))
-                while True:
-                    message = input("\n=> ")
-                    modify_cache("save_message", "[{}] {}".format(str(self.ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), message)
-                    try:
-                        connection.send(RSA_keys[4].encrypt(bytes(message, "utf-8")))
-                    except ConnectionResetError:
-                        pass
-                    if message.lower() == "exit":
-                        modify_cache("stop_listening")
-                    if modify_cache("get_listening_status") == False:
-                        user_choice = input("\n[?] Voulez-vous enregistrer cette conversation ? [O/N]\n=> ")
-                        user_choice = verify_user_entry("str", user_choice, ["o", "n"], "[?] Voulez-vous enregistrer cette conversation ? [O/N]")
-                        if user_choice.lower() == "o":
-                            modify_cache("save_conversation")
-                        break
-                listener_process.terminate()                
-                del(active_threads[int(self.id)])
-                print("\n[!] Connexion fermée !\n")
-                
             else:
                 try:
                     connection.send(bytes("0", "utf-8"))
@@ -85,6 +66,25 @@ else:
                     pass
                 print("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip))
                 
+
+
+    def send_message(message):
+        message = input("\n=> ")
+        modify_cache("save_message", "[{}] {}".format(str(ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), message)
+        try:
+            connection.send(RSA_keys[4].encrypt(bytes(message, "utf-8")))
+        except ConnectionResetError:
+            pass
+        if message.lower() == "exit":
+            modify_cache("stop_listening")
+        if modify_cache("get_listening_status") == False:
+            user_choice = input("\n[?] Voulez-vous enregistrer cette conversation ? [O/N]\n=> ")
+            user_choice = verify_user_entry("str", user_choice, ["o", "n"], "[?] Voulez-vous enregistrer cette conversation ? [O/N]")
+            if user_choice.lower() == "o":
+                modify_cache("save_conversation")
+        listener_process.terminate()                
+        del(active_threads[int(self.id)])
+        print("\n[!] Connexion fermée !\n")
 
 
     def verify_user_entry(expected_type:str, value, desired_value:list, input_text:str):
@@ -200,15 +200,10 @@ else:
             else:
                 modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
 
-
-    def start_server(ip:str):
-        s = socket(AF_INET, SOCK_STREAM)
-        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        s.bind((str(ip), 25115))
+    
+    def server(s, ip):
         while True:
             s.listen(1)
-            print("\n[!] Serveur démarré sur {}:25115. Si aucun client ne se connecte, quittez ETM et relancez-le pour revenir au menu.\n".format(str(ip)))
-            
             connection, client_informations = s.accept()
             newthread = thread(ip, len(active_threads), client_informations[0])
             if get_user_config()["status"] == "offline":
@@ -220,6 +215,33 @@ else:
                 break
         for t in active_threads:
             t.start()
+
+
+    def start_server(ip_usage_choice, ip=""):
+        print(ip_usage_choice)
+        if ip_usage_choice == "1":
+            ip = get_user_config()["ip"]
+            print(ip)
+
+        if ip_usage_choice == "2" and ip == "":
+            app.alert("Erreur lors de la création du serveur. Veuillez vérifier que vous avez bien cohé la case \"utiliser l'adresse ip enregistrée\" ou que vous avez entré votre adresse IP privée le cas échéant.")
+            app.server_creation_page()
+        else:
+            try:
+                s = socket(AF_INET, SOCK_STREAM)
+                s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+                s.bind((str(ip), 25115))
+            except:
+                app.alert("Erreur lors de la création du serveur. Veuillez vérifier que vous avez bien cohé la case \"utiliser l'adresse ip enregistrée\" ou que vous avez entré votre adresse IP privée le cas échéant.")
+                app.server_creation_page()
+            else:
+                app.information("Serveur démarré sur {}:25115.".format(str(ip)))
+                app.discussion_page()
+                discussion_content=""
+                discussion_content = "{}Serveur démarré sur {}:25115.\n".format(discussion_content, str(ip))
+                app.discussion_display_label.configure(text=discussion_content)
+                server_process = Process(target=server, args=(s,ip,))
+                server_process.start()
 
 
     def start_client(ip:str):
@@ -318,7 +340,7 @@ else:
                 user_config_file.close()
             print("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
         if not len(keys) == 1:
-            GUI.information(self=GUI, message="Vos réglages ont été modifiés avec succès !")
+            app.information(message="Vos réglages ont été modifiés avec succès !")
         
 
 
@@ -343,13 +365,17 @@ else:
 
 
     def add_contact (name:str, description:str, ip:str):
-        if not path.exists("./contacts.csv"):
-            with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
-        with open("./contacts.csv", "a") as contacts_file:
-            contacts_file_writer = writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = QUOTE_MINIMAL)
-            contacts_file_writer.writerow([str(name), str(description), str(ip)])
-            contacts_file.close()
-        print("\n[!] Contact crée avec succès !\n")
+        if not (name and description and ip) or (name or ip) == ("" or " "):
+            app.warning(message="Attention, vous n'avez pas rempli toutes les cases !")
+        else:
+            if not path.exists("./contacts.csv"):
+                with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
+            with open("./contacts.csv", "a") as contacts_file:
+                contacts_file_writer = writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = QUOTE_MINIMAL)
+                contacts_file_writer.writerow([str(name), str(description), str(ip)])
+                contacts_file.close()
+            app.information(message="Le contact [ {} ({}) ] a été crée avec succès !".format(name, ip))
+            app.main_page()
         
 
 
@@ -578,7 +604,7 @@ else:
             self.ip_entry = Entry(self.frame, textvariable=self.ip_value, font=("Arial", 12))
             self.ip_entry.grid(row=3, column=1, sticky="EW", padx=65)
 
-            self.create_server_button = Button(self.frame, text="Héberger le salon", command=None, font=("Arial", 12), height=2)
+            self.create_server_button = Button(self.frame, text="Héberger le salon", command=lambda : start_server(str(self.ip_usage_choice.get()), self.ip_value.get()), font=("Arial", 12), height=2)
             self.create_server_button.grid(row=4, column=0, columnspan=2, sticky="EW", padx=45)
 
             self.frame.grid()
@@ -745,7 +771,7 @@ else:
             self.contact_ip_entry = Entry(self.frame, textvariable=self.contact_ip_value, font=("Arial", 12))
             self.contact_ip_entry.grid(row=3, column=1, sticky="EW", padx=65)
 
-            self.create_server_button = Button(self.frame, text="Ajouter le contact", command=None, font=("Arial", 12), height=2)
+            self.create_server_button = Button(self.frame, text="Ajouter le contact", command=lambda : add_contact(self.contact_name_value.get(), self.contact_description_value.get(), self.contact_ip_value.get()), font=("Arial", 12), height=2)
             self.create_server_button.grid(row=4, column=0, columnspan=2, sticky="EW", padx=45)
 
             self.frame.grid()
@@ -777,6 +803,40 @@ else:
 
             self.frame.grid()
 
+        
+        def discussion_page(self, contact_ip="Auncun Correspondant"):
+            self.frame.grid_forget()
+
+            self.frame = Frame(self)
+
+            self.frame.grid_columnconfigure(index=0, minsize=200)
+            self.frame.grid_columnconfigure(index=0, minsize=1080)
+            self.frame.grid_rowconfigure(index=0, minsize=50)
+            self.frame.grid_rowconfigure(index=1, minsize=50)
+            self.frame.grid_rowconfigure(index=2, minsize=510)
+            self.frame.grid_rowconfigure(index=3, minsize=40)
+
+            self.contact_ip = contact_ip
+
+            self.title_label = Label(self.frame, text="Discussion", font=("Arial", 30))
+            self.title_label.grid(row=0, column=0, columnspan=2, sticky="NEWS", padx=45, pady=10)
+
+            self.contact_ip_label = Label(self.frame, text=str("Contact : ".format(self.contact_ip)), font=("Arial", 12))
+            self.contact_ip_label.grid(row=1, column=0, columnspan=2, sticky="NEWS")
+
+            self.discussion_display_label = Label(self.frame, text="", font=("Arial", 12))
+            self.discussion_display_label.grid(row=2, column=0, columnspan=2, sticky="NEW", padx=45, pady=25)
+
+            self.message_entry_value = StringVar()
+
+            self.message_entry = Entry(self.frame, textvariable=self.message_entry_value, font=("Arial", 12))
+            self.message_entry.grid(row=3, column=0, sticky="NEWS", padx=45)
+
+            self.message_submit_button = Button(self.frame, text="Envoyer", command=None, font=("Arial", 12), height=2)
+            self.message_submit_button.grid(row=3, column=1, sticky="NEWS", padx=45)
+
+            self.frame.grid()
+
 
         def quit(self):
             modify_user_status(2)
@@ -786,6 +846,7 @@ else:
     if __name__ == "__main__":
         active_threads = []
         RSA_keys = [] #RSA_keys[0] = clé de base, RSA_keys[1] = clé privée, RSA_keys[2] = clé publique, RSA_keys[3] = clé publique du contact pour l'import, RSA_keys[4] = clé publique du contact
+        discussion_content = ""
         initialize(False)
 
         app = GUI()
