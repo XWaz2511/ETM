@@ -1,9 +1,11 @@
-# Version Release 1.1.0 (18/04/2022 h):
+# Version Release 1.1.0 (18/04/2022 16h55):
     # Added :
         - Ajout d'une coloration aux messages système ;
-        - Ajout de messages systèmes lorsque ETM effectue les vérifications d'installation de bibliothèques python ;
     # Fixed :
         - Raccourcissement du temps de pause entre l'affichage des messages système (0.25s) ;
+        - Correction d'un bug faisant que la fonction verify_user_entry() prenait en compte la différence entre majuscule et minuscule ;
+    # Removed :
+        - Suppression de initialize() (inutile) ;
     # To-do :
         - Rédiger la documentation, l'aide, et commenter le code ;
 
