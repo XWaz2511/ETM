@@ -65,7 +65,7 @@ else:
 
     if platform == ("linux" or "linux2"):
         system("clear")
-        print("\n[!] Sous linux, ETM doit être lancé en tant que sudo pour être certain de bien s'exécuter !")
+        print(colored("\n[!] Sous linux, ETM doit être lancé en tant que sudo pour être certain de bien s'exécuter !\n", "blue"))
     elif platform == ("win32" or "win64"):
         multiprocessing.set_start_method("spawn")
         system("cls")
@@ -110,14 +110,14 @@ else:
                         break
                 listener_process.terminate()                
                 del(active_threads[int(self.id)])
-                print("\n[!] Connexion fermée !\n")
+                print(colored("\n[!] Connexion fermée !\n", "blue"))
                 sleep(0.25)
             else:
                 try:
                     connection.send(bytes("0", "utf-8"))
                 except ConnectionResetError:
                     pass
-                print("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip))
+                print(colored(str("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip)), "red"))
                 sleep(0.25)
 
 
@@ -130,8 +130,11 @@ else:
                 sleep(1)
                 value = input("\n{}\n=> ".format(input_text))
             else:
-                if (type(value) == "str") and (len(desired_value) > 0):
-                    value = value.lower()
+                if type(value) == str:
+                    try:
+                        value = value.lower()
+                    except:
+                        pass
                 if (len(desired_value) > 0) and (value not in desired_value):
                     print("\nVous avez entré une mauvaise valeur ! Une valeur parmi les suivantes est attendue : {}. \n".format(desired_value))
                     sleep(1)
@@ -153,7 +156,7 @@ else:
                 }
                 dump(cache_template, cache_file)
                 cache_file.close()
-            print("\n[!] Le cache a été vidé !\n")
+            print(colored("\n[!] Le cache a été vidé !\n", "blue"))
             sleep(0.25)
         elif request == "save_message":
             with open("./cache.json", "r") as cache_file:
@@ -182,10 +185,10 @@ else:
                     saved_conversation_file.write(str("\n\t\" {} \"\n".format(str(elt[1]))))
                     saved_conversation_file.close()
             if path.exists("./saved_conversation.txt"):
-                print("\n[!] Conversation sauvegardée avec succès dans saved_conversation.txt !\n")
+                print(colored("\n[!] Conversation sauvegardée avec succès dans saved_conversation.txt !\n", "green"))
                 sleep(0.25)
             else:
-                print("\n[X] Échec lors de la sauvegarde de la conversation !\n")
+                print(colored("\n[X] Échec lors de la sauvegarde de la conversation !\n", "red"))
                 sleep(0.25)
         elif request == "stop_listening":
             with open("./cache.json", "r") as cache_file:
@@ -207,7 +210,7 @@ else:
     def initialize (force_user_config_regeneration:bool):
         print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer jusqu'à une trentaine de secondes suivant votre ordinateur.\n")
         RSA_keys.append(RSA.generate(4096))
-        print("\n[!] La clé a été générée avec succès !\n")
+        print(colored("\n[!] La clé a été générée avec succès !\n", "green"))
         sleep(0.25)
         RSA_keys.append(" ")
         RSA_keys.append(RSA_keys[0].public_key().export_key())
@@ -225,11 +228,11 @@ else:
                 print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
             except ConnectionResetError:
                 modify_cache("stop_listening")
-                print("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
+                print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
             if decrypted_data.lower() == "exit":
                 modify_cache("stop_listening")
-                print("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n")
+                print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
             else:
                 modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
@@ -241,7 +244,7 @@ else:
         s.bind((str(ip), 25115))
         while True:
             s.listen(1)
-            print("\n[!] Serveur démarré sur {}:25115. Si aucun client ne se connecte, quittez ETM et relancez-le pour revenir au menu.\n".format(str(ip)))
+            print(colored(str("\n[!] Serveur démarré sur {}:25115. Si aucun client ne se connecte, quittez ETM et relancez-le pour revenir au menu.\n".format(str(ip))), "blue"))
             sleep(1)
             connection, client_informations = s.accept()
             newthread = thread(ip, len(active_threads), client_informations[0])
@@ -263,7 +266,7 @@ else:
             s.connect((str(ip), 25115))
             server_error_code = s.recv(16384).decode("utf-8")
         except ConnectionRefusedError:
-            print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
+            print(colored("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n", "red"))
             sleep(0.25)
             s.close()
         else:
@@ -271,7 +274,7 @@ else:
                 s.send(RSA_keys[2])
                 RSA_keys.append(s.recv(16384))
                 RSA_keys.append(PKCS1_OAEP.new(RSA.import_key(RSA_keys[3])))
-                print("\n[!] Connection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n")
+                print(colored("\n[!] Connection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n", "green"))
                 modify_cache("reset_cache")
                 listener_process = Process(target=listener, args=(s, ip, RSA_keys[0].export_key(),), daemon=True)
                 listener_process.start()
@@ -292,10 +295,10 @@ else:
                         break
                 listener_process.terminate()
                 s.close()
-                print("\n[!] Connexion fermée !\n")
+                print(colored("\n[!] Connexion fermée !\n", "blue"))
                 sleep(0.25)
             else:
-                print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
+                print(colored("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n", "red"))
                 sleep(0.25)
                 s.close()
 
@@ -308,12 +311,12 @@ else:
                 try:
                     user_config_content["name"], user_config_content["description"], user_config_content["ip"], user_config_content["status"]
                 except KeyError:
-                    print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                    print(colored("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n", "red"))
                     sleep(0.25)
                     regenerate_user_config(True)
                 else:
                     if len(user_config_content) > 4:
-                        print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
+                        print(colored("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n", "red"))
                         sleep(0.25)
                         regenerate_user_config(True)
                     else:
@@ -332,7 +335,7 @@ else:
             with open("./user.json", "w") as user_config_file:
                 dump(user_config_file_template, user_config_file)
                 user_config_file.close()
-            print("\n[!] Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
+            print(colored("\n[!] Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n", "blue"))
             sleep(0.25)
 
 
@@ -347,7 +350,7 @@ else:
         with open("./user.json", "w") as user_config_file:
             dump(user_config_content, user_config_file)
             user_config_file.close()
-        print("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
+        print(colored(str("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key)), "green"))
         sleep(0.25)
 
 
@@ -359,7 +362,7 @@ else:
             modify_user_config("status", "online")
         else:
             modify_user_config("status", "offline")
-        print("\n[!] Statut modifié avec succès !\n")
+        print(colored("\n[!] Statut modifié avec succès !\n", "green"))
         sleep(0.25)
 
 
@@ -378,7 +381,7 @@ else:
             contacts_file_writer = writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = QUOTE_MINIMAL)
             contacts_file_writer.writerow([str(name), str(description), str(ip)])
             contacts_file.close()
-        print("\n[!] Contact crée avec succès !\n")
+        print(colored("\n[!] Contact crée avec succès !\n", "green"))
         sleep(0.25)
 
 
@@ -418,6 +421,11 @@ else:
 
 
     def menu():
+        if platform == ("linux" or "linux2"):
+            system("clear")
+        elif platform == ("win32" or "win64"):
+            system("cls")
+
         logo = '''                   
     ███████╗████████╗███╗   ███╗
     ██╔════╝╚══██╔══╝████╗ ████║
@@ -427,12 +435,7 @@ else:
     ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
         '''
 
-        print("\n{}\n\t(V. 1.0.2)\n".format(logo))
-
-        if platform == ("linux" or "linux2"):
-            system("clear")
-        elif platform == ("win32" or "win64"):
-            system("cls")
+        print(colored(str("\n{}\n\t(V. 1.0.2)\n".format(logo)), attrs=["bold"]))
 
         while True:
             user_choice = input("\n[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n=> ")
@@ -493,16 +496,16 @@ else:
                 modify_user_status(user_choice)
 
             elif user_choice == 7:
-                print("\n[!] Bientôt\n")
+                print(colored("\n[!] Bientôt\n", "blue"))
                 sleep(0.25)
 
             elif user_choice == 8:
-                print("\n[!] Bientôt\n")
+                print(colored("\n[!] Bientôt\n", "blue"))
                 sleep(0.25)
 
             elif user_choice == 9:
                 modify_user_status(2)
-                print("\n[!] Au revoir !")
+                print(colored("\n[!] Au revoir !", "blue"))
                 sleep(1)
                 break
 
