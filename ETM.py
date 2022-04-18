@@ -72,6 +72,7 @@ else:
     else:
         print("\nVous exécutez ETM depuis la plateforme [{}] qui n'est pas officiellement prise en charge par le logiciel (les plateformes prises en charge à 100% étant linux et windows). Les développeurs sont dans l'incapacité de vous garantir que le programme s'exécutera et fonctionnera correctement. L'équipe s'excuse d'avance pour la gêne occasionnée.\n".format(str(platform)))
 
+
     class thread(Thread):
         def __init__(self, ip, id, client_ip):
             Thread.__init__(self)
