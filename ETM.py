@@ -5,7 +5,6 @@ version = version_info
 if version[0] < 3:
     print("[X] ETM ne peut fonctionner correctement que sous python 3.0.0 minimum et votre version est actuellement la {}.{}.{} ; Veuillez mettre à jour python et réessayer.".format(str(version[0]), str(version[1]), str(version[2])))
 else:
-
     from csv import writer, QUOTE_MINIMAL, reader
     from json import loads, dump
     import multiprocessing
@@ -90,7 +89,7 @@ else:
                 except ConnectionResetError:
                     pass          
                 modify_cache("reset_cache")
-                listener_process = Process(target=listener, args=(connection, self.client_ip, RSA_keys[0].export_key(),), daemon=True)
+                listener_process = Process(target=listener, args=(connection, self.client_ip, RSA_keys[0].export_key()))
                 listener_process.start()
                 print("\n[+] Nouveau client connecté ({}:25115) ! Dès que vous voudrez quitter la discussion, entrez Exit.\n".format(client_ip))
                 while True:
@@ -179,7 +178,7 @@ else:
             cache_content = cache_content["saved_conversation"].items()
             for elt in cache_content:
                 with open("./saved_conversation.txt", "a") as saved_conversation_file:
-                    saved_conversation_file.write("\n# {} =>".format(str(elt[0])))
+                    saved_conversation_file.write("\n {} =>".format(str(elt[0])))
                     saved_conversation_file.close()
                 with open("./saved_conversation.txt", "a") as saved_conversation_file:
                     saved_conversation_file.write(str("\n\t\" {} \"\n".format(str(elt[1]))))
@@ -207,7 +206,7 @@ else:
             return cache_content["keep_listening"]
 
 
-    def initialize (force_user_config_regeneration:bool):
+    def initialize(force_user_config_regeneration:bool):
         print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer jusqu'à une trentaine de secondes suivant votre ordinateur.\n")
         RSA_keys.append(RSA.generate(4096))
         print(colored("\n[!] La clé a été générée avec succès !\n", "green"))
@@ -221,20 +220,25 @@ else:
 
     def listener(s:socket, pair_ip:str, key:RSA.RsaKey):
         private_key = PKCS1_OAEP.new(RSA.import_key(key))
+        print("test1")
         while True:
             try:
+                print("test2")
                 crypted_data = s.recv(16384)
                 decrypted_data = private_key.decrypt(crypted_data).decode("utf-8")
                 print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
             except ConnectionResetError:
+                print("test3")
                 modify_cache("stop_listening")
                 print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
             if decrypted_data.lower() == "exit":
+                print("test4")
                 modify_cache("stop_listening")
                 print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
             else:
+                print("test5")
                 modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
 
 
@@ -256,7 +260,7 @@ else:
             if len(active_threads) <= 0:
                 break
         for t in active_threads:
-            t.start()
+            t.join()
 
 
     def start_client(ip:str):
@@ -276,7 +280,7 @@ else:
                 RSA_keys.append(PKCS1_OAEP.new(RSA.import_key(RSA_keys[3])))
                 print(colored("\n[!] Connection à l'hôte réussie ! Dès que vous voudrez quitter la discussion, entrez Exit.\n", "green"))
                 modify_cache("reset_cache")
-                listener_process = Process(target=listener, args=(s, ip, RSA_keys[0].export_key(),), daemon=True)
+                listener_process = Process(target=listener, args=(s, ip, RSA_keys[0].export_key()))
                 listener_process.start()
                 while True:
                     message = input("\n=> ")
@@ -512,12 +516,11 @@ else:
 
     if __name__ == "__main__":
         active_threads = []
-        RSA_keys = [] #RSA_keys[0] = clé de base, RSA_keys[1] = clé privée, RSA_keys[2] = clé publique, RSA_keys[3] = clé publique du contact pour l'import, RSA_keys[4] = clé publique du contact
+        RSA_keys = [] # RSA_keys[0] = clé de base, RSA_keys[1] = clé privée, RSA_keys[2] = clé publique, RSA_keys[3] = clé publique du contact pour l'import, RSA_keys[4] = clé publique du contact
         initialize(False)
 
         sleep(0.25)
 
-        daemon = Process(target=menu(), daemon=True)
-        daemon.start()
+        menu()
 
 # By XWaz \(°o°)/
