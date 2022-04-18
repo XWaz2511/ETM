@@ -1,3 +1,14 @@
+# Version Release 1.1.0 (18/04/2022 h):
+    # Added :
+        - Ajout d'une coloration aux messages système ;
+        - Ajout de messages systèmes lorsque ETM effectue les vérifications d'installation de bibliothèques python ;
+    # Fixed :
+        - Raccourcissement du temps de pause entre l'affichage des messages système (0.25s) ;
+    # To-do :
+        - Rédiger la documentation, l'aide, et commenter le code ;
+
+--------------------------------------------------
+
 # Version Release 1.0.2 (17/04/2022 10h48):
     # Fixed :
         - Ajout de .close() au fichier reader de display_contacts() ;

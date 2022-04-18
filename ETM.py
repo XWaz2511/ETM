@@ -16,19 +16,58 @@ else:
     from datetime import datetime
     from time import sleep
 
+    print("\n[...] Vérification de l'installation des bibliothèques python...\n")
+    sleep(0.25)
+
     try:
+        print("\n[...] Vérification de l'installation de pycryptodome et pycryptodomex\n")
+        sleep(0.25)
         from Cryptodome.PublicKey import RSA
         from Cryptodome.Cipher import PKCS1_OAEP
     except:
+        print("\n[X] Pycryptodome et pycryptodomex ne sont pas installés !\n")
+        sleep(0.25)
         system("pip3 install pycryptodome")
         system("pip3 install pycryptodomex")
         from Cryptodome.PublicKey import RSA
         from Cryptodome.Cipher import PKCS1_OAEP
+    else:
+        print("\n[!] Pycryptodome et pycryptodomex sont bien installés.\n")
+        sleep(0.25)
+
+    try:
+        print("\n[...] Vérification de l'installation de termcolor...\n")
+        sleep(0.25)
+        from termcolor import colored
+    except:
+        print("\n[X] Termcolor n'est pas installé !\n")
+        sleep(0.25)
+        system("pip3 install termcolor")
+        from termcolor import colored
+    else:
+        print("\n[!] Termcolor est bien installé !\n")
+        sleep(0.25)
+
+    try:
+        print("\n[...] Vérification de l'installation de colorama...\n")
+        sleep(0.25)
+        from colorama import init
+    except:
+        print("\n[X] Colorama n'est pas installé !\n")
+        sleep(0.25)
+        system("pip3 install colorama")
+        from colorama import init
+        init()
+    else:
+        init()
+        print("\n[!] Colorama est bien installé !\n")
+        sleep(0.25)
 
     if platform == ("linux" or "linux2"):
+        system("clear")
         print("\n[!] Sous linux, ETM doit être lancé en tant que sudo pour être certain de bien s'exécuter !")
     elif platform == ("win32" or "win64"):
-        pass
+        system("cls")
     else:
         print("\nVous exécutez ETM depuis la plateforme [{}] qui n'est pas officiellement prise en charge par le logiciel (les plateformes prises en charge à 100% étant linux et windows). Les développeurs sont dans l'incapacité de vous garantir que le programme s'exécutera et fonctionnera correctement. L'équipe s'excuse d'avance pour la gêne occasionnée.\n".format(str(platform)))
 
@@ -74,14 +113,14 @@ else:
                 listener_process.terminate()                
                 del(active_threads[int(self.id)])
                 print("\n[!] Connexion fermée !\n")
-                sleep(0.5)
+                sleep(0.25)
             else:
                 try:
                     connection.send(bytes("0", "utf-8"))
                 except ConnectionResetError:
                     pass
                 print("\n[X] Un client ({}:25115) a essayé de se connecter mais a été rejeté étant donné que vous êtes en mode hors-ligne. Utilisez l'option 3 du menu pour changer votre statut.\n".format(client_ip))
-                sleep(0.5)
+                sleep(0.25)
 
 
     def verify_user_entry(expected_type:str, value, desired_value:list, input_text:str):
@@ -117,7 +156,7 @@ else:
                 dump(cache_template, cache_file)
                 cache_file.close()
             print("\n[!] Le cache a été vidé !\n")
-            sleep(0.5)
+            sleep(0.25)
         elif request == "save_message":
             with open("./cache.json", "r") as cache_file:
                 JSONcontent = cache_file.read()
@@ -146,10 +185,10 @@ else:
                     saved_conversation_file.close()
             if path.exists("./saved_conversation.txt"):
                 print("\n[!] Conversation sauvegardée avec succès dans saved_conversation.txt !\n")
-                sleep(0.5)
+                sleep(0.25)
             else:
                 print("\n[X] Échec lors de la sauvegarde de la conversation !\n")
-                sleep(0.5)
+                sleep(0.25)
         elif request == "stop_listening":
             with open("./cache.json", "r") as cache_file:
                 JSON_cache_content = cache_file.read()
@@ -171,7 +210,7 @@ else:
         print("[...] Génération de la clé RSA 4096 bits... Cette opération peut durer jusqu'à une trentaine de secondes suivant votre ordinateur.\n")
         RSA_keys.append(RSA.generate(4096))
         print("\n[!] La clé a été générée avec succès !\n")
-        sleep(0.5)
+        sleep(0.25)
         RSA_keys.append(" ")
         RSA_keys.append(RSA_keys[0].public_key().export_key())
         regenerate_user_config(force_user_config_regeneration)
@@ -227,7 +266,7 @@ else:
             server_error_code = s.recv(16384).decode("utf-8")
         except ConnectionRefusedError:
             print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
-            sleep(0.5)
+            sleep(0.25)
             s.close()
         else:
             if server_error_code == ("1"):
@@ -256,10 +295,10 @@ else:
                 listener_process.terminate()
                 s.close()
                 print("\n[!] Connexion fermée !\n")
-                sleep(0.5)
+                sleep(0.25)
             else:
                 print("\n[X] Connection à l'hôte impossible : l'hôte est hors-ligne ou indisponible.\n")
-                sleep(0.5)
+                sleep(0.25)
                 s.close()
 
 
@@ -272,12 +311,12 @@ else:
                     user_config_content["name"], user_config_content["description"], user_config_content["ip"], user_config_content["status"]
                 except KeyError:
                     print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
-                    sleep(0.5)
+                    sleep(0.25)
                     regenerate_user_config(True)
                 else:
                     if len(user_config_content) > 4:
                         print("\n[X] Corruption du fichier de configuration détectée ! Le fichier a été régénéré. Désolé pour la gêne occasionnée.\n")
-                        sleep(0.5)
+                        sleep(0.25)
                         regenerate_user_config(True)
                     else:
                         pass
@@ -296,7 +335,7 @@ else:
                 dump(user_config_file_template, user_config_file)
                 user_config_file.close()
             print("\n[!] Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n")
-            sleep(0.5)
+            sleep(0.25)
 
 
     def modify_user_config(key:str, value:str):
@@ -311,7 +350,7 @@ else:
             dump(user_config_content, user_config_file)
             user_config_file.close()
         print("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key))
-        sleep(0.5)
+        sleep(0.25)
 
 
     def modify_user_status(user_choice:int=-1):
@@ -323,7 +362,7 @@ else:
         else:
             modify_user_config("status", "offline")
         print("\n[!] Statut modifié avec succès !\n")
-        sleep(0.5)
+        sleep(0.25)
 
 
     def get_user_config():
@@ -342,7 +381,7 @@ else:
             contacts_file_writer.writerow([str(name), str(description), str(ip)])
             contacts_file.close()
         print("\n[!] Contact crée avec succès !\n")
-        sleep(0.5)
+        sleep(0.25)
 
 
     def display_contacts():
@@ -407,7 +446,7 @@ else:
                         start_client(contact["ip"])
                     else:
                         print("\nVous n'avez aucun contact enregistré à ce nom !\n")
-                        sleep(0.5)
+                        sleep(0.25)
                 else:
                     ip = input("\n[?] Quelle est l'adresse IP de votre contact ?\n=> ")
                     ip = verify_user_entry("str", ip, [], "[?] Quelle est l'adresse IP de votre contact ?")
@@ -441,11 +480,11 @@ else:
 
             elif user_choice == 7:
                 print("\n[!] Bientôt\n")
-                sleep(0.5)
+                sleep(0.25)
 
             elif user_choice == 8:
                 print("\n[!] Bientôt\n")
-                sleep(0.5)
+                sleep(0.25)
 
             elif user_choice == 9:
                 modify_user_status(2)
@@ -469,7 +508,7 @@ else:
 
         print("\n{}\n\t(V. 1.0.2)\n".format(logo))
 
-        sleep(0.5)
+        sleep(0.25)
 
         daemon = Process(target=menu(), daemon=True)
         daemon.start()
