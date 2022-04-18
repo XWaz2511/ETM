@@ -7,7 +7,6 @@ if version[0] < 3:
 else:
     from csv import writer, QUOTE_MINIMAL, reader
     from json import loads, dump
-    import multiprocessing
     from os import system, path
     from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
     from threading import Thread
@@ -15,11 +14,7 @@ else:
     from datetime import datetime
     from time import sleep
 
-    print("\n[...] Vérification de l'installation des bibliothèques python...\n")
-    sleep(0.25)
-
     try:
-        print("\n[...] Vérification de l'installation de pycryptodome et pycryptodomex\n")
         sleep(0.25)
         from Cryptodome.PublicKey import RSA
         from Cryptodome.Cipher import PKCS1_OAEP
@@ -30,12 +25,8 @@ else:
         system("pip3 install pycryptodomex")
         from Cryptodome.PublicKey import RSA
         from Cryptodome.Cipher import PKCS1_OAEP
-    else:
-        print("\n[!] Pycryptodome et pycryptodomex sont bien installés.\n")
-        sleep(0.25)
 
     try:
-        print("\n[...] Vérification de l'installation de termcolor...\n")
         sleep(0.25)
         from termcolor import colored
     except:
@@ -43,12 +34,8 @@ else:
         sleep(0.25)
         system("pip3 install termcolor")
         from termcolor import colored
-    else:
-        print("\n[!] Termcolor est bien installé !\n")
-        sleep(0.25)
 
     try:
-        print("\n[...] Vérification de l'installation de colorama...\n")
         sleep(0.25)
         from colorama import init
     except:
@@ -59,15 +46,11 @@ else:
         init()
     else:
         init()
-        print("\n[!] Colorama est bien installé !\n")
-        sleep(0.25)
 
     if platform == ("linux" or "linux2"):
-        system("clear")
         print(colored("\n[!] Sous linux, ETM doit être lancé en tant que sudo pour être certain de bien s'exécuter !\n", "blue"))
     elif platform == ("win32" or "win64"):
-        multiprocessing.set_start_method("spawn")
-        system("cls")
+        pass
     else:
         print("\nVous exécutez ETM depuis la plateforme [{}] qui n'est pas officiellement prise en charge par le logiciel (les plateformes prises en charge à 100% étant linux et windows). Les développeurs sont dans l'incapacité de vous garantir que le programme s'exécutera et fonctionnera correctement. L'équipe s'excuse d'avance pour la gêne occasionnée.\n".format(str(platform)))
 
@@ -220,25 +203,20 @@ else:
 
     def listener(s:socket, pair_ip:str, key:RSA.RsaKey):
         private_key = PKCS1_OAEP.new(RSA.import_key(key))
-        print("test1")
         while True:
-            try:
-                print("test2")
+            try:   
                 crypted_data = s.recv(16384)
                 decrypted_data = private_key.decrypt(crypted_data).decode("utf-8")
                 print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
-            except ConnectionResetError:
-                print("test3")
+            except ConnectionResetError:   
                 modify_cache("stop_listening")
                 print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
-            if decrypted_data.lower() == "exit":
-                print("test4")
+            if decrypted_data.lower() == "exit":   
                 modify_cache("stop_listening")
                 print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
-            else:
-                print("test5")
+            else:    
                 modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
 
 
@@ -439,7 +417,7 @@ else:
     ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
         '''
 
-        print(colored(str("\n{}\n\t(V. 1.0.2)\n".format(logo)), attrs=["bold"]))
+        print(colored(str("\n{}\n\t(V. 1.1.0)\n".format(logo)), attrs=["bold"]))
 
         while True:
             user_choice = input("\n[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n=> ")
