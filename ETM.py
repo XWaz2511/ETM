@@ -418,6 +418,22 @@ else:
 
 
     def menu():
+        logo = '''                   
+    ███████╗████████╗███╗   ███╗
+    ██╔════╝╚══██╔══╝████╗ ████║
+    █████╗     ██║   ██╔████╔██║
+    ██╔══╝     ██║   ██║╚██╔╝██║
+    ███████╗   ██║   ██║ ╚═╝ ██║
+    ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
+        '''
+
+        print("\n{}\n\t(V. 1.0.2)\n".format(logo))
+
+        if platform == ("linux" or "linux2"):
+            system("clear")
+        elif platform == ("win32" or "win64"):
+            system("cls")
+
         while True:
             user_choice = input("\n[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n=> ")
             user_choice = verify_user_entry("int", user_choice, [1,2,3,4,5,6,7,8,9], "[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n")
@@ -495,16 +511,6 @@ else:
         active_threads = []
         RSA_keys = [] #RSA_keys[0] = clé de base, RSA_keys[1] = clé privée, RSA_keys[2] = clé publique, RSA_keys[3] = clé publique du contact pour l'import, RSA_keys[4] = clé publique du contact
         initialize(False)
-        logo = '''                   
-    ███████╗████████╗███╗   ███╗
-    ██╔════╝╚══██╔══╝████╗ ████║
-    █████╗     ██║   ██╔████╔██║
-    ██╔══╝     ██║   ██║╚██╔╝██║
-    ███████╗   ██║   ██║ ╚═╝ ██║
-    ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
-        '''
-
-        print("\n{}\n\t(V. 1.0.2)\n".format(logo))
 
         sleep(0.25)
 
