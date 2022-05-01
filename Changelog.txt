@@ -1,4 +1,13 @@
-# Version Release 1.2.0 (01/05/2022 h):
+# Version Release 1.2.1 (01/05/2022 h):
+    # Added :
+        - Lors de la génération du fichier de configuration utilisateur, le nom de la machine et l'adresse IP locale sont automatiquement détectés ;
+        - L'utilisateur a le choix, lors de l'hébergement, d'utiliser soit l'adresse IP enregistrée, soit d'utiliser l'adresse locale, soit de l'entrer lui-même ;
+    # To-do :
+        - Rédiger la documentation, l'aide, et commenter le code ;
+
+--------------------------------------------------
+
+# Version Release 1.2.0 (01/05/2022 10h00):
     # Added :
         - Ajout d'un launcher qui s'occuppe de vérifier l'installation des dépendances et des procédures de lancement inhérentes à la plateforme (version .py et .exe) ;
         - Ajout d'une structure au programme : ajout d'un répertoire bin qui différencie le programme principal du launcher ;

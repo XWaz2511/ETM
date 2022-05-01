@@ -8,7 +8,7 @@ else:
     from csv import writer, QUOTE_MINIMAL, reader
     from json import loads, dump
     from os import system, path
-    from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
+    from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, gethostbyname, gethostname
     from threading import Thread
     from multiprocessing import Process
     from datetime import datetime
@@ -281,9 +281,9 @@ else:
             else:
                 with open("./bin/user.json", "x") as user_config_file: user_config_file.close()
             user_config_file_template = {
-                "name": "User",
+                "name": str(gethostname()),
                 "description": "null",
-                "ip": "127.0.0.1",
+                "ip": str(gethostbyname(gethostname())),
                 "status": "online"
             }
             with open("./bin/user.json", "w") as user_config_file:
@@ -396,14 +396,16 @@ else:
             user_choice = verify_user_entry("int", user_choice, [1,2,3,4,5,6,7,8,9], "[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n")
 
             if user_choice == 1:
-                user_choice = input("\n[?] Voulez-vous utiliser l'adresse IP enregistrée ? [O/N]\n=> ")
-                user_choice = verify_user_entry("str", user_choice, ["o", "n"], "[?] Voulez-vous utiliser l'adresse IP enregistrée ? [O/N]")
-                if user_choice.lower() == "o":
+                user_choice = input("\n[?] Voulez-vous utiliser l'adresse IP enregistrée, votre adresse IP locale (automatiquement détectée) ou entrer une adresse vous-même ? [1/2/3]\n=> ")
+                user_choice = verify_user_entry("int", user_choice, [1, 2, 3], "[?] Voulez-vous utiliser l'adresse IP enregistrée, votre adresse IP locale (automatiquement détectée) ou entrer une adresse vous-même ? [1/2/3]")
+                if user_choice == 1:
                     user_config = get_user_config()
                     start_server(user_config["ip"])
+                elif user_choice == 2:
+                    start_server(str(gethostbyname(gethostname())))
                 else:
-                    ip = input("\n[?] Quelle adresse IP voulez-vous utiliser ?\n=> ")
-                    ip = verify_user_entry("str", ip, [], "[?] Quelle adresse IP voulez-vous utiliser ?")
+                    ip = input("\n[?] Veuillez entrer l'adresse IP que vous souhaitez utiliser.\n=> ")
+                    ip = verify_user_entry("str", ip, [], "[?] Veuillez entrer l'adresse IP que vous souhaitez utiliser.")
                     start_server(ip)
 
             elif user_choice == 2:

@@ -17,7 +17,7 @@ logo = '''
     ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
         '''
 
-print(str("\n{}\n\t(V. 1.2.0)\n".format(logo)))
+print(str("\n{}\n\t(V. 1.2.1)\n".format(logo)))
 
 
 if version[0] < 3:
