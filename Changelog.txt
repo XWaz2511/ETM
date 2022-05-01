@@ -1,9 +1,26 @@
+# Version Release 1.2.0 (01/05/2022 h):
+    # Added :
+        - Ajout d'un launcher qui s'occuppe de vérifier l'installation des dépendances et des procédures de lancement inhérentes à la plateforme (version .py et .exe) ;
+        - Ajout d'une structure au programme : ajout d'un répertoire bin qui différencie le programme principal du launcher ;
+    # Fixed :
+        - Ajout d'une structure de test lors de la sauvegarde des messages qui évite à ETM de crasher en cas de spam de messages ;   
+        - Utilisation de pip et python au lieu de pip3 et python3 ;
+    # Removed :
+        - Suppression des messages lors des vérifications des dépendances qui venaient polluer l'interface lors des lancements de Process (à savoir, listener_process) ;
+        - Suppression des vérifications de dépendances au démarrage du programme qui se contente de s'arrêter en cas d'erreur d'importation ;
+    # To-do :
+        - Rédiger la documentation, l'aide, et commenter le code ;
+
+--------------------------------------------------
+
 # Version Release 1.1.0 (18/04/2022 16h55):
     # Added :
         - Ajout d'une coloration aux messages système ;
     # Fixed :
         - Raccourcissement du temps de pause entre l'affichage des messages système (0.25s) ;
         - Correction d'un bug faisant que la fonction verify_user_entry() prenait en compte la différence entre majuscule et minuscule ;
+    # Removed :
+        - Suppression de initialize() (inutile) ;
     # To-do :
         - Rédiger la documentation, l'aide, et commenter le code ;
 
