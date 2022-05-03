@@ -51,7 +51,7 @@ else:
                     connection.send(RSA_keys[2])
                     RSA_keys.append(PKCS1_OAEP.new(RSA.import_key(RSA_keys[3])))
                 except ConnectionResetError:
-                    pass          
+                    pass
                 modify_cache("reset_cache")
                 listener_process = Process(target=listener, args=(connection, self.client_ip, RSA_keys[0].export_key()))
                 listener_process.start()
@@ -71,7 +71,7 @@ else:
                         if user_choice.lower() == "o":
                             modify_cache("save_conversation")
                         break
-                listener_process.terminate()                
+                listener_process.terminate()
                 del(active_threads[int(self.id)])
                 print(colored("\n[!] Connexion fermée !\n", "blue"))
                 sleep(0.25)
@@ -168,25 +168,27 @@ else:
                 cache_content = loads(JSON_cache_content)
                 cache_file.close()
             return cache_content["keep_listening"]
-        
+
 
     def listener(s:socket, pair_ip:str, key:RSA.RsaKey):
         private_key = PKCS1_OAEP.new(RSA.import_key(key))
         while True:
-            try:   
+            try:
                 crypted_data = s.recv(16384)
                 decrypted_data = private_key.decrypt(crypted_data).decode("utf-8")
-                print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
-            except ConnectionResetError:   
-                modify_cache("stop_listening")
-                print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
+            except:
+                if modify_cache("get_listening_status") == True:
+                    modify_cache("stop_listening")
+                    print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
-            if decrypted_data.lower() == "exit":   
+            if decrypted_data.lower() == "exit":
                 modify_cache("stop_listening")
                 print(colored("\n[!] Votre correspondant s'est déconnecté ! Appuyez sur une touche pour continuer.\n", "blue"))
                 break
             else:
-                try:  
+                if modify_cache("get_listening_status") == True:
+                    print("\n=> [{}] {}\n\t{}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S')), decrypted_data))
+                try:
                     modify_cache("save_message", "[{}] {}".format(str(pair_ip), str(datetime.now().strftime('%d-%m-%Y %H:%M:%S'))), decrypted_data)
                 except:
                     pass
@@ -380,16 +382,16 @@ else:
         elif platform == ("win32" or "win64"):
             system("cls")
 
-        logo = '''                   
+        logo = '''
     ███████╗████████╗███╗   ███╗
     ██╔════╝╚══██╔══╝████╗ ████║
     █████╗     ██║   ██╔████╔██║
     ██╔══╝     ██║   ██║╚██╔╝██║
     ███████╗   ██║   ██║ ╚═╝ ██║
-    ╚══════╝   ╚═╝   ╚═╝     ╚═╝                                      
+    ╚══════╝   ╚═╝   ╚═╝     ╚═╝
         '''
 
-        print(colored(str("\n{}\n\t(V. 1.2.0)\n".format(logo)), attrs=["bold"]))
+        print(colored(str("\n{}\n\t(V. 1.2.2)\n".format(logo)), attrs=["bold"]))
 
         while True:
             user_choice = input("\n[?] Quel Est Votre Souhait ?\n\t1/ Héberger un salon ;\n\t2/ Me connecter à un salon ;\n\t3/ Modifier mes réglages ;\n\t4/ Afficher mes contacts ;\n\t5/ Ajouter un contact ;\n\t6/ Modifier mon statut ;\n\t7/ Afficher l'aide ;\n\t8/ C'est quoi ETM ? ;\n\t9/ Quitter ETM ;\n\n=> ")
@@ -434,7 +436,7 @@ else:
 
             elif user_choice == 4:
                 display_contacts()
-                
+
 
             elif user_choice == 5:
                 contact_name = input("\n[?] Quel est le nom de votre contact ?\n=> ")
@@ -468,7 +470,7 @@ else:
 
     if __name__ == "__main__":
         modify_cache("reset_cache")
-        
+
         regenerate_user_config(False)
 
         modify_user_status(1)
