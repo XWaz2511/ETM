@@ -222,7 +222,10 @@ else:
     def start_server(ip:str):
         s = socket(AF_INET, SOCK_STREAM)
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        s.bind((str(ip), 25115))
+        try:
+            s.bind((str(ip), 25115))
+        except:
+            print(colored("\n[X] Impossible de démarrer le serveur sur l'adresse {}:25115. Veuillez entrer votre adresse IP locale.\n".format(ip), "red"))
         while True:
             s.listen(1)
             print(colored(str("\n[!] Serveur démarré sur {}:25115. Si aucun client ne se connecte, quittez ETM et relancez-le pour revenir au menu.\n".format(str(ip))), "blue"))
