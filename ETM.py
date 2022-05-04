@@ -5,6 +5,13 @@ version = version_info
 if version[0] < 3:
     print("[X] ETM ne peut fonctionner correctement que sous python 3.0.0 minimum et votre version est actuellement la {}.{}.{} ; Veuillez mettre à jour python et réessayer.".format(str(version[0]), str(version[1]), str(version[2])))
 else:
+    relaunch = False
+
+
+    def pause_program():
+        wait = input("\nVeuillez appuyer sur une touche pour continuer...\n")
+
+
     from csv import writer, QUOTE_MINIMAL, reader
     from json import loads, dump
     from os import system, path
@@ -19,21 +26,38 @@ else:
         from Cryptodome.Cipher import PKCS1_OAEP
     except:
         print("\n[X] Pycryptodome et pycryptodomex ne sont pas installés !\n")
-        exit()
+        system("pip install pycryptodome")
+        system("pip install pycryptodomex")
+        relaunch = True
 
     try:
         from termcolor import colored
     except:
         print("\n[X] Termcolor n'est pas installé !\n")
-        exit()
+        system("pip install termcolor")
+        relaunch = True
 
     try:
         from colorama import init
+        init()
     except:
         print("\n[X] Colorama n'est pas installé !\n")
+        system("pip install colorama")
+        relaunch = True
+
+
+    if relaunch:
+        print("\n[!] Les dépendances manquantes ont été installées. Veuillez relancer ETM.\n")
+        pause_program()
         exit()
+
+    
+    if platform == ("linux" or "linux2"):
+        print(colored("\n[!] Sous linux, ETM doit être lancé en tant que sudo pour être certain de bien s'exécuter !\n", "blue"))
+    elif platform == ("win32" or "win64"):
+        pass
     else:
-        init()
+        print("\n[X] Vous exécutez ETM depuis la plateforme [{}] qui n'est pas officiellement prise en charge par le logiciel (les plateformes prises en charge à 100% étant linux et windows). Les développeurs sont dans l'incapacité de vous garantir que le programme s'exécutera et fonctionnera correctement. L'équipe s'excuse d'avance pour la gêne occasionnée.\n".format(str(platform)))
 
 
     class thread(Thread):
@@ -108,11 +132,11 @@ else:
 
 
     def modify_cache(request:str, key:str="", value:str=""):
-        if not path.exists("./bin/cache.json"):
-            with open("./bin/cache.json", "x") as cache_file: cache_file.close()
+        if not path.exists("./cache.json"):
+            with open("./cache.json", "x") as cache_file: cache_file.close()
 
         if request == "reset_cache":
-            with open("./bin/cache.json", "w") as cache_file:
+            with open("./cache.json", "w") as cache_file:
                 cache_template = {
                     "keep_listening": True,
                     "saved_conversation": {}
@@ -122,16 +146,16 @@ else:
             print(colored("\n[!] Le cache a été vidé !\n", "blue"))
             sleep(0.25)
         elif request == "save_message":
-            with open("./bin/cache.json", "r") as cache_file:
+            with open("./cache.json", "r") as cache_file:
                 JSONcontent = cache_file.read()
                 cache_content = loads(JSONcontent)
                 cache_file.close()
             cache_content["saved_conversation"][str(key)] = str(value)
-            with open("./bin/cache.json", "w") as cache_file:
+            with open("./cache.json", "w") as cache_file:
                 dump(cache_content, cache_file)
                 cache_file.close()
         elif request == "save_conversation":
-            with open("./bin/cache.json", "r") as cache_file:
+            with open("./cache.json", "r") as cache_file:
                 JSON_cache_content = cache_file.read()
                 cache_content = loads(JSON_cache_content)
                 cache_file.close()
@@ -154,16 +178,16 @@ else:
                 print(colored("\n[X] Échec lors de la sauvegarde de la conversation !\n", "red"))
                 sleep(0.25)
         elif request == "stop_listening":
-            with open("./bin/cache.json", "r") as cache_file:
+            with open("./cache.json", "r") as cache_file:
                 JSON_cache_content = cache_file.read()
                 cache_content = loads(JSON_cache_content)
                 cache_file.close()
             cache_content["keep_listening"] = False
-            with open("./bin/cache.json", "w") as cache_file:
+            with open("./cache.json", "w") as cache_file:
                 dump(cache_content, cache_file)
                 cache_file.close()
         elif request == "get_listening_status":
-            with open("./bin/cache.json", "r") as cache_file:
+            with open("./cache.json", "r") as cache_file:
                 JSON_cache_content = cache_file.read()
                 cache_content = loads(JSON_cache_content)
                 cache_file.close()
@@ -260,8 +284,8 @@ else:
 
 
     def regenerate_user_config (force_regeneration:bool):
-        if path.exists("./bin/user.json") and force_regeneration == False:
-            with open("./bin/user.json", "r") as user_config_file:
+        if path.exists("./user.json") and force_regeneration == False:
+            with open("./user.json", "r") as user_config_file:
                 JSON_user_config_content = user_config_file.read()
                 user_config_content = loads(JSON_user_config_content)
                 try:
@@ -278,17 +302,17 @@ else:
                     else:
                         pass
         else:
-            if path.exists("./bin/user.json"):
-                with open("./bin/user.json", "w") as user_config_file: user_config_file.close()
+            if path.exists("./user.json"):
+                with open("./user.json", "w") as user_config_file: user_config_file.close()
             else:
-                with open("./bin/user.json", "x") as user_config_file: user_config_file.close()
+                with open("./user.json", "x") as user_config_file: user_config_file.close()
             user_config_file_template = {
                 "name": str(gethostname()),
                 "description": "null",
                 "ip": str(gethostbyname(gethostname())),
                 "status": "online"
             }
-            with open("./bin/user.json", "w") as user_config_file:
+            with open("./user.json", "w") as user_config_file:
                 dump(user_config_file_template, user_config_file)
                 user_config_file.close()
             print(colored("\n[!] Nouveau fichier de configuration utilisateur généré. N'oubliez pas de jeter un coup d'oeil à vos paramètres pour les modifier.\n", "blue"))
@@ -296,14 +320,14 @@ else:
 
 
     def modify_user_config(key:str, value:str):
-        if not path.exists("./bin/user.json"):
+        if not path.exists("./user.json"):
             regenerate_user_config(False)
-        with open("./bin/user.json", "r") as user_config_file:
+        with open("./user.json", "r") as user_config_file:
             JSON_user_config_content = user_config_file.read()
             user_config_content = loads(JSON_user_config_content)
             user_config_content[key] = value
             user_config_file.close()
-        with open("./bin/user.json", "w") as user_config_file:
+        with open("./user.json", "w") as user_config_file:
             dump(user_config_content, user_config_file)
             user_config_file.close()
         print(colored(str("\n[!] La valeur [{}] a été affectée à la clé [{}] avec succès !\n".format(value, key)), "green"))
@@ -323,7 +347,7 @@ else:
 
 
     def get_user_config():
-        with open("./bin/user.json", "r") as user_config_file:
+        with open("./user.json", "r") as user_config_file:
             JSON_user_config_content = user_config_file.read()
             user_config_content = loads(JSON_user_config_content)
             user_config_file.close()
@@ -331,9 +355,9 @@ else:
 
 
     def add_contact (name:str, description:str, ip:str):
-        if not path.exists("./bin/contacts.csv"):
-            with open("./bin/contacts.csv", "x") as contacts_file: contacts_file.close()
-        with open("./bin/contacts.csv", "a") as contacts_file:
+        if not path.exists("./contacts.csv"):
+            with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
+        with open("./contacts.csv", "a") as contacts_file:
             contacts_file_writer = writer(contacts_file, delimiter = " ", quotechar = "\"", quoting = QUOTE_MINIMAL)
             contacts_file_writer.writerow([str(name), str(description), str(ip)])
             contacts_file.close()
@@ -342,9 +366,9 @@ else:
 
 
     def display_contacts():
-        if not path.exists("./bin/contacts.csv"):
-            with open("./bin/contacts.csv", "x") as contacts_file: contacts_file.close()
-        with open("./bin/contacts.csv", "r") as contacts_file:
+        if not path.exists("./contacts.csv"):
+            with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
+        with open("./contacts.csv", "r") as contacts_file:
             contacts_file_reader = reader(contacts_file, delimiter=" ", quotechar = "\"")
             i = 1
             for row in contacts_file_reader:
@@ -358,9 +382,9 @@ else:
 
 
     def getContactInfo(name:str):
-        if not path.exists("./bin/contacts.csv"):
-            with open("./bin/contacts.csv", "x") as contacts_file: contacts_file.close()
-        with open("./bin/contacts.csv", "r") as contacts_file:
+        if not path.exists("./contacts.csv"):
+            with open("./contacts.csv", "x") as contacts_file: contacts_file.close()
+        with open("./contacts.csv", "r") as contacts_file:
             contacts_file_reader = reader(contacts_file, delimiter=" ", quotechar = "\"")
             for row in contacts_file_reader:
                 if len(row) > 0 and str(row[0]).lower() == name.lower():
