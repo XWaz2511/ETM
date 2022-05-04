@@ -59,7 +59,6 @@ else:
     else:
         print("\n[X] Vous exécutez ETM depuis la plateforme [{}] qui n'est pas officiellement prise en charge par le logiciel (les plateformes prises en charge à 100% étant linux et windows). Les développeurs sont dans l'incapacité de vous garantir que le programme s'exécutera et fonctionnera correctement. L'équipe s'excuse d'avance pour la gêne occasionnée.\n".format(str(platform)))
 
-
     class thread(Thread):
         def __init__(self, ip, id, client_ip):
             Thread.__init__(self)
@@ -132,8 +131,10 @@ else:
 
 
     def modify_cache(request:str, key:str="", value:str=""):
-        if not path.exists("./cache.json"):
-            with open("./cache.json", "x") as cache_file: cache_file.close()
+        if path.exists("cache.json") == False:
+            open("./cache.json", "x").close()
+        else:
+            pass
 
         if request == "reset_cache":
             with open("./cache.json", "w") as cache_file:
