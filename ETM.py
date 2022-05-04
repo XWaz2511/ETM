@@ -482,11 +482,11 @@ else:
                 modify_user_status(user_choice)
 
             elif user_choice == 7:
-                print(colored("\n[!] Bientôt\n", "blue"))
+                print("\n\t1/ Vous permet de vous connecter à un salon en tant qu'hôte. Veuillez utiliser une adresse IP locale lors de la création ;\n\t2/ Vous permet de vous connecter à un salon en tant que client. Vous devrez soit entrer une adresse IP publique, soit le nom d'un contact enregistré valide ;\n\t3/ Permet de modifier votre statut, votre nom, votre description ou votre IP enregistrée ;\n\t4/ Affiche vos contacts enregistrés et leurs informations ;\n\t5/ Permet d'enregistrer un contact ;\n\t6/ Permet de passer rapidement de en ligne à hors ligne et vice versa ;\n\t7/ Affiche l'aide ;\n\t8/ Affiche une courte description d'ETM ;\n\t9/ Ferme ETM proprement ;\n")
                 sleep(0.25)
 
             elif user_choice == 8:
-                print(colored("\n[!] Bientôt\n", "blue"))
+                print("\nETM est une messagerie cryptée, open source, P2P et facilement modifiable et utilisable par tous. Ayant pour vocation de donner à chacun un moyen simple, sécurisé et hautement modifiable pour communiquer, ETM est un choix appréciable pour quiconque souhaite maîtriser la technologie qu'il manipule.\n")
                 sleep(0.25)
 
             elif user_choice == 9:
