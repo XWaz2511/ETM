@@ -1,3 +1,11 @@
+# Version Release 1.2.3 :
+    # Fixed :
+        - ETM doit maintenant être relancé si des installations de dépendances ont dû être faites ;
+    # To-do :
+        - Rédiger la documentation, l'aide, et commenter le code ;
+
+--------------------------------------------------
+
 # Version Release 1.2.2 :
     # Fixed :
         - Ajout d'une structure de test dans le listener pour savoir s'il faut traiter le message ou non (si on s'est déconnecté ou non avant la réception) ;
