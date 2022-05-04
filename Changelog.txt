@@ -1,5 +1,6 @@
 # Version Release 1.2.3 :
     # Fixed :
+        - Launcher supprimé ;
         - ETM doit maintenant être relancé si des installations de dépendances ont dû être faites ;
     # To-do :
         - Rédiger la documentation, l'aide, et commenter le code ;
