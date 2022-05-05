@@ -1,0 +1,10 @@
+Nom : ETM (Encrypted Terminal Messaging) ;
+
+Équipe : Sasha Guérin-Loison, Marwan Doghmi, Yassine Diallo, Hugo Villepontoux ;
+
+Résumé : ETM est une messagerie P2P fonctionnant dans un terminal de commandes de manière simple, 
+intuitive et sécurisée pour tout type d’utilisateur, quel que soit son niveau en
+informatique ou la plateforme depuis laquelle est exécuté le programme. En effet, le problème
+de la vie privée étant devenu un enjeu majeur, nous avons voulu créer une messagerie cryptée autonome
+et totalement transparente sur son mode de fonctionnement car open source et conservant un
+mode de fonctionnement le plus simple possible.
