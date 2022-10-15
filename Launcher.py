@@ -3,7 +3,7 @@ from os import system
 
 
 def pause_program():
-        wait = input("\nVeuillez appuyer sur une touche pour continuer...\n")
+    wait = input("\nVeuillez appuyer sur une touche pour continuer...\n")
 
 
 if platform == ("linux" or "linux2"):
